@@ -12,7 +12,7 @@ var WebGLPipeline = require('../WebGLPipeline');
 
 /**
  * @classdesc
- * BitmapMaskPipeline handles all bitmap masking rendering in WebGL. It works by using 
+ * BitmapMaskPipeline handles all bitmap masking rendering in WebGL. It works by using
  * sampling two texture on the fragment shader and using the fragment's alpha to clip the region.
  * The config properties are:
  * - game: Current game instance.
@@ -35,7 +35,7 @@ var WebGLPipeline = require('../WebGLPipeline');
 var BitmapMaskPipeline = new Class({
 
     Extends: WebGLPipeline,
-    
+
     initialize:
 
     function BitmapMaskPipeline (config)
@@ -87,7 +87,7 @@ var BitmapMaskPipeline = new Class({
         this.maxQuads = 1;
 
         /**
-         * Dirty flag to check if resolution properties need to be updated on the 
+         * Dirty flag to check if resolution properties need to be updated on the
          * masking shader.
          *
          * @name Phaser.Renderer.WebGL.Pipelines.BitmapMaskPipeline#resolutionDirty
@@ -113,7 +113,7 @@ var BitmapMaskPipeline = new Class({
 
         var renderer = this.renderer;
         var program = this.program;
-        
+
         if (this.resolutionDirty)
         {
             renderer.setFloat2(program, 'uResolution', this.width, this.height);
@@ -186,10 +186,10 @@ var BitmapMaskPipeline = new Class({
     },
 
     /**
-     * The masked game objects framebuffer is unbound and its texture 
-     * is bound together with the mask texture and the mask shader and 
+     * The masked game objects framebuffer is unbound and its texture
+     * is bound together with the mask texture and the mask shader and
      * a draw call with a single quad is processed. Here is where the
-     * masking effect is applied.  
+     * masking effect is applied.
      *
      * @method Phaser.Renderer.WebGL.Pipelines.BitmapMaskPipeline#endMask
      * @since 3.0.0
@@ -229,7 +229,7 @@ var BitmapMaskPipeline = new Class({
             {
                 gl.enable(gl.STENCIL_TEST);
 
-                prev.mask.applyStencil(renderer, prev.camera, true);
+                prev.mask.applyStencil(renderer, prev.camera, true, prev.transformMatrix);
             }
             else
             {
