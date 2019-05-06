@@ -239,11 +239,8 @@ var BitmapMaskPipeline = new Class({
             //  Bind bitmap mask pipeline and draw
             renderer.setPipeline(this);
 
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, mask.maskTexture);
-
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, mask.mainTexture);
+            renderer.setTexture2D( mask.maskTexture, 1, false );
+            renderer.setTexture2D( mask.mainTexture, 0, false );
 
             gl.uniform1i(gl.getUniformLocation(this.program, 'uInvertMaskAlpha'), mask.invertAlpha);
 
