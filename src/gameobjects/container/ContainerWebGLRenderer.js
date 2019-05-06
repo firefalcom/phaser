@@ -77,12 +77,25 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
 
         if (child.mask)
         {
-            var childTransformMatrix = child.localTransform;
-            childTransformMatrix.loadIdentity();
-            childTransformMatrix.multiply(transformMatrix);
-            childTransformMatrix.translate(child.x, child.y);
-            childTransformMatrix.rotate(child.rotation);
-            childTransformMatrix.scale(child.scaleX, child.scaleY);
+            var childTransformMatrix;
+
+            if( transformMatrix)
+            {
+                childTransformMatrix = child.localTransform;
+
+                if( childTransformMatrix )
+                {
+                    childTransformMatrix.loadIdentity();
+                    childTransformMatrix.multiply(transformMatrix);
+                    childTransformMatrix.translate(child.x, child.y);
+                    childTransformMatrix.rotate(child.rotation);
+                    childTransformMatrix.scale(child.scaleX, child.scaleY);
+                }
+                else
+                {
+                    childTransformMatrix = transformMatrix;
+                }
+            }
 
             child.mask.preRenderWebGL(renderer, child, camera, childTransformMatrix);
         }
