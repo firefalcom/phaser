@@ -209,16 +209,22 @@ var BitmapMaskPipeline = new Class({
             renderer.flush();
 
             //  First we draw the mask to the mask fb
-            renderer.setFramebuffer(mask.maskFramebuffer);
 
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+            if (mask.dirty)
+            {
+                renderer.setFramebuffer(mask.maskFramebuffer);
 
-            renderer.setBlendMode(0, true);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
 
-            bitmapMask.renderWebGL(renderer, bitmapMask, 0, camera);
+                renderer.setBlendMode(0, true);
 
-            renderer.flush();
+                bitmapMask.renderWebGL(renderer, bitmapMask, 0, camera);
+
+                renderer.flush();
+
+                mask.dirty = false;
+            }
 
             renderer.setFramebuffer(mask.prevFramebuffer);
 
