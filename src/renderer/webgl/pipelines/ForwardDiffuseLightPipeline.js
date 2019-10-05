@@ -480,6 +480,7 @@ var ForwardDiffuseLightPipeline = new Class({
 
         if (normalTexture)
         {
+            this.flush();
             this.renderer.setPipeline(this);
 
             this.setTexture2D(normalTexture.glTexture, 1);
