@@ -12,7 +12,7 @@ var WebGLPipeline = require('../WebGLPipeline');
 
 /**
  * @classdesc
- * BitmapMaskPipeline handles all bitmap masking rendering in WebGL. It works by using 
+ * BitmapMaskPipeline handles all bitmap masking rendering in WebGL. It works by using
  * sampling two texture on the fragment shader and using the fragment's alpha to clip the region.
  * The config properties are:
  * - game: Current game instance.
@@ -35,7 +35,7 @@ var WebGLPipeline = require('../WebGLPipeline');
 var BitmapMaskPipeline = new Class({
 
     Extends: WebGLPipeline,
-    
+
     initialize:
 
     function BitmapMaskPipeline (config)
@@ -87,7 +87,7 @@ var BitmapMaskPipeline = new Class({
         this.maxQuads = 1;
 
         /**
-         * Dirty flag to check if resolution properties need to be updated on the 
+         * Dirty flag to check if resolution properties need to be updated on the
          * masking shader.
          *
          * @name Phaser.Renderer.WebGL.Pipelines.BitmapMaskPipeline#resolutionDirty
@@ -113,7 +113,7 @@ var BitmapMaskPipeline = new Class({
 
         var renderer = this.renderer;
         var program = this.program;
-        
+
         if (this.resolutionDirty)
         {
             renderer.setFloat2(program, 'uResolution', this.width, this.height);
@@ -186,10 +186,10 @@ var BitmapMaskPipeline = new Class({
     },
 
     /**
-     * The masked game objects framebuffer is unbound and its texture 
-     * is bound together with the mask texture and the mask shader and 
+     * The masked game objects framebuffer is unbound and its texture
+     * is bound together with the mask texture and the mask shader and
      * a draw call with a single quad is processed. Here is where the
-     * masking effect is applied.  
+     * masking effect is applied.
      *
      * @method Phaser.Renderer.WebGL.Pipelines.BitmapMaskPipeline#endMask
      * @since 3.0.0
@@ -209,16 +209,22 @@ var BitmapMaskPipeline = new Class({
             renderer.flush();
 
             //  First we draw the mask to the mask fb
-            renderer.setFramebuffer(mask.maskFramebuffer);
 
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+            if (mask.dirty)
+            {
+                renderer.setFramebuffer(mask.maskFramebuffer);
 
-            renderer.setBlendMode(0, true);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
 
-            bitmapMask.renderWebGL(renderer, bitmapMask, 0, camera);
+                renderer.setBlendMode(0, true);
 
-            renderer.flush();
+                bitmapMask.renderWebGL(renderer, bitmapMask, 0, camera);
+
+                renderer.flush();
+
+                mask.dirty = false;
+            }
 
             renderer.setFramebuffer(mask.prevFramebuffer);
 
@@ -229,7 +235,7 @@ var BitmapMaskPipeline = new Class({
             {
                 gl.enable(gl.STENCIL_TEST);
 
-                prev.mask.applyStencil(renderer, prev.camera, true);
+                prev.mask.applyStencil(renderer, prev.camera, true, prev.transformMatrix);
             }
             else
             {
@@ -239,11 +245,8 @@ var BitmapMaskPipeline = new Class({
             //  Bind bitmap mask pipeline and draw
             renderer.setPipeline(this);
 
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, mask.maskTexture);
-
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, mask.mainTexture);
+            renderer.setTexture2D( mask.maskTexture, 1, false );
+            renderer.setTexture2D( mask.mainTexture, 0, false );
 
             gl.uniform1i(gl.getUniformLocation(this.program, 'uInvertMaskAlpha'), mask.invertAlpha);
 

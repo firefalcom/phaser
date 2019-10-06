@@ -85,7 +85,7 @@ var GeometryMask = new Class({
      * @since 3.0.0
      *
      * @param {Phaser.GameObjects.Graphics} graphicsGeometry - The Graphics object which will be used for the Geometry Mask.
-     * 
+     *
      * @return {this} This Geometry Mask
      */
     setShape: function (graphicsGeometry)
@@ -103,7 +103,7 @@ var GeometryMask = new Class({
      * @since 3.17.0
      *
      * @param {boolean} [value=true] - Invert the alpha of this mask?
-     * 
+     *
      * @return {this} This Geometry Mask
      */
     setInvertAlpha: function (value)
@@ -125,7 +125,7 @@ var GeometryMask = new Class({
      * @param {Phaser.GameObjects.GameObject} child - The Game Object being rendered.
      * @param {Phaser.Cameras.Scene2D.Camera} camera - The camera the Game Object is being rendered through.
      */
-    preRenderWebGL: function (renderer, child, camera)
+    preRenderWebGL: function (renderer, child, camera, transformMatrix)
     {
         var gl = renderer.gl;
 
@@ -145,9 +145,9 @@ var GeometryMask = new Class({
             renderer.currentMask.mask = this;
         }
 
-        renderer.maskStack.push({ mask: this, camera: camera });
+        renderer.maskStack.push({ mask: this, camera: camera, transformMatrix: transformMatrix });
 
-        this.applyStencil(renderer, camera, true);
+        this.applyStencil(renderer, camera, true, transformMatrix);
 
         renderer.maskCount++;
     },
@@ -162,7 +162,7 @@ var GeometryMask = new Class({
      * @param {Phaser.Cameras.Scene2D.Camera} camera - The camera the Game Object is being rendered through.
      * @param {boolean} inc - Is this an INCR stencil or a DECR stencil?
      */
-    applyStencil: function (renderer, camera, inc)
+    applyStencil: function (renderer, camera, inc, transformMatrix)
     {
         var gl = renderer.gl;
         var geometryMask = this.geometryMask;
@@ -182,7 +182,7 @@ var GeometryMask = new Class({
         }
 
         //  Write stencil buffer
-        geometryMask.renderWebGL(renderer, geometryMask, 0, camera);
+        geometryMask.renderWebGL(renderer, geometryMask, 0, camera, transformMatrix);
 
         renderer.flush();
 
@@ -242,7 +242,7 @@ var GeometryMask = new Class({
 
             var prev = renderer.maskStack[renderer.maskStack.length - 1];
 
-            prev.mask.applyStencil(renderer, prev.camera, false);
+            prev.mask.applyStencil(renderer, prev.camera, false, prev.transformMatrix);
 
             if (renderer.currentCameraMask.mask !== prev.mask)
             {
