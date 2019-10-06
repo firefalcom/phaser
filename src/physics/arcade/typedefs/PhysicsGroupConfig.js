@@ -1,9 +1,10 @@
 /**
- * @typedef {object} Phaser.Physics.Arcade.Types.PhysicsGroupConfig
- * @extends Phaser.GameObjects.Group.Types.GroupConfig
+ * @typedef {object} Phaser.Types.Physics.Arcade.PhysicsGroupConfig
+ * @extends Phaser.Types.GameObjects.Group.GroupConfig
  * @since 3.0.0
  *
  * @property {boolean} [collideWorldBounds=false] - Sets {@link Phaser.Physics.Arcade.Body#collideWorldBounds}.
+ * @property {Phaser.Geom.Rectangle} [customBoundsRectangle=null] - Sets {@link Phaser.Physics.Arcade.Body#setBoundsRectangle setBoundsRectangle}.
  * @property {number} [accelerationX=0] - Sets {@link Phaser.Physics.Arcade.Body#acceleration acceleration.x}.
  * @property {number} [accelerationY=0] - Sets {@link Phaser.Physics.Arcade.Body#acceleration acceleration.y}.
  * @property {boolean} [allowDrag=true] - Sets {@link Phaser.Physics.Arcade.Body#allowDrag}.

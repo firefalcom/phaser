@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Clamp = require('../math/Clamp');
@@ -30,7 +30,7 @@ var GetValue = require('../utils/object/GetValue');
  *
  * @param {Phaser.Animations.AnimationManager} manager - A reference to the global Animation Manager
  * @param {string} key - The unique identifying string for this animation.
- * @param {Phaser.Animations.Types.Animation} config - The Animation configuration.
+ * @param {Phaser.Types.Animations.Animation} config - The Animation configuration.
  */
 var Animation = new Class({
 
@@ -224,7 +224,7 @@ var Animation = new Class({
      * @method Phaser.Animations.Animation#addFrame
      * @since 3.0.0
      *
-     * @param {(string|Phaser.Animations.Types.AnimationFrame[])} config - [description]
+     * @param {(string|Phaser.Types.Animations.AnimationFrame[])} config - [description]
      *
      * @return {Phaser.Animations.Animation} This Animation object.
      */
@@ -240,7 +240,7 @@ var Animation = new Class({
      * @since 3.0.0
      *
      * @param {integer} index - The index to insert the frame at within the animation.
-     * @param {(string|Phaser.Animations.Types.AnimationFrame[])} config - [description]
+     * @param {(string|Phaser.Types.Animations.AnimationFrame[])} config - [description]
      *
      * @return {Phaser.Animations.Animation} This Animation object.
      */
@@ -353,7 +353,7 @@ var Animation = new Class({
      * @since 3.0.0
      *
      * @param {Phaser.Textures.TextureManager} textureManager - [description]
-     * @param {(string|Phaser.Animations.Types.AnimationFrame[])} frames - [description]
+     * @param {(string|Phaser.Types.Animations.AnimationFrame[])} frames - [description]
      * @param {string} [defaultTextureKey] - [description]
      *
      * @return {Phaser.Animations.AnimationFrame[]} [description]
@@ -803,7 +803,7 @@ var Animation = new Class({
      * @method Phaser.Animations.Animation#toJSON
      * @since 3.0.0
      *
-     * @return {Phaser.Animations.Types.JSONAnimation} [description]
+     * @return {Phaser.Types.Animations.JSONAnimation} [description]
      */
     toJSON: function ()
     {
@@ -843,9 +843,11 @@ var Animation = new Class({
         var len = this.frames.length;
         var slice = 1 / (len - 1);
 
+        var frame;
+
         for (var i = 0; i < len; i++)
         {
-            var frame = this.frames[i];
+            frame = this.frames[i];
 
             frame.index = i + 1;
             frame.isFirst = false;
@@ -855,11 +857,21 @@ var Animation = new Class({
             if (i === 0)
             {
                 frame.isFirst = true;
-                frame.isLast = (len === 1);
-                frame.prevFrame = this.frames[len - 1];
-                frame.nextFrame = this.frames[i + 1];
+
+                if (len === 1)
+                {
+                    frame.isLast = true;
+                    frame.nextFrame = frame;
+                    frame.prevFrame = frame;
+                }
+                else
+                {
+                    frame.isLast = false;
+                    frame.prevFrame = this.frames[len - 1];
+                    frame.nextFrame = this.frames[i + 1];
+                }
             }
-            else if (i === len - 1)
+            else if (i === len - 1 && len > 1)
             {
                 frame.isLast = true;
                 frame.prevFrame = this.frames[len - 2];

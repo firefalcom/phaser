@@ -2,7 +2,7 @@
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var BaseSoundManager = require('../BaseSoundManager');
@@ -12,6 +12,15 @@ var HTML5AudioSound = require('./HTML5AudioSound');
 
 /**
  * HTML5 Audio implementation of the Sound Manager.
+ * 
+ * Note: To play multiple instances of the same HTML5 Audio sound, you need to provide an `instances` value when
+ * loading the sound with the Loader:
+ * 
+ * ```javascript
+ * this.load.audio('explosion', 'explosion.mp3', {
+ *     instances: 2
+ * });
+ * ```
  *
  * @class HTML5AudioSoundManager
  * @extends Phaser.Sound.BaseSoundManager
@@ -133,7 +142,7 @@ var HTML5AudioSoundManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - Asset key for the sound.
-     * @param {Phaser.Sound.Types.SoundConfig} [config] - An optional config object containing default sound settings.
+     * @param {Phaser.Types.Sound.SoundConfig} [config] - An optional config object containing default sound settings.
      *
      * @return {Phaser.Sound.HTML5AudioSound} The new sound instance.
      */

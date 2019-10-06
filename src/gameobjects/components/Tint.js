@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -296,6 +296,7 @@ var Tint = {
 
     /**
      * The tint value being applied to the whole of the Game Object.
+     * This property is a setter-only. Use the properties `tintTopLeft` etc to read the current tint value.
      * 
      * @name Phaser.GameObjects.Components.Tint#tint
      * @type {integer}

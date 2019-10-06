@@ -1,9 +1,11 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
+var Body = require('./lib/body/Body');
+var Bodies = require('./lib/factory/Bodies');
 var Class = require('../../utils/Class');
 var Factory = require('./Factory');
 var GetFastValue = require('../../utils/object/GetFastValue');
@@ -90,6 +92,24 @@ var MatterPhysics = new Class({
          * @since 3.14.0
          */
         this.verts = Vertices;
+
+        /**
+         * A reference to the `Matter.Body` module which contains methods for creating and manipulating body models.
+         *
+         * @name Phaser.Physics.Matter.MatterPhysics#body
+         * @type {MatterJS.Body}
+         * @since 3.18.0
+         */
+        this.body = Body;
+
+        /**
+         * A reference to the `Matter.Bodies` module which contains methods for creating bodies.
+         *
+         * @name Phaser.Physics.Matter.MatterPhysics#bodies
+         * @type {MatterJS.Bodies}
+         * @since 3.18.0
+         */
+        this.bodies = Bodies;
 
         //  Matter plugins
 
@@ -306,12 +326,23 @@ var MatterPhysics = new Class({
     {
         var eventEmitter = this.systems.events;
 
-        eventEmitter.off(SceneEvents.UPDATE, this.world.update, this.world);
-        eventEmitter.off(SceneEvents.POST_UPDATE, this.world.postUpdate, this.world);
+        if (this.world)
+        {
+            eventEmitter.off(SceneEvents.UPDATE, this.world.update, this.world);
+            eventEmitter.off(SceneEvents.POST_UPDATE, this.world.postUpdate, this.world);
+        }
+
         eventEmitter.off(SceneEvents.SHUTDOWN, this.shutdown, this);
 
-        this.add.destroy();
-        this.world.destroy();
+        if (this.add)
+        {
+            this.add.destroy();
+        }
+
+        if (this.world)
+        {
+            this.world.destroy();
+        }
 
         this.add = null;
         this.world = null;

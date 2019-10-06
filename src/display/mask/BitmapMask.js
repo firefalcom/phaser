@@ -1,10 +1,11 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
+var GameEvents = require('../../core/events');
 
 /**
  * @classdesc
@@ -159,7 +160,7 @@ var BitmapMask = new Class({
             this.mainFramebuffer = renderer.createFramebuffer(width, height, this.mainTexture, true);
             this.maskFramebuffer = renderer.createFramebuffer(width, height, this.maskTexture, true);
 
-            renderer.onContextRestored(function (renderer)
+            scene.sys.game.events.on(GameEvents.CONTEXT_RESTORED, function (renderer)
             {
                 var width = renderer.width;
                 var height = renderer.height;

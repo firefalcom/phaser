@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
@@ -21,7 +21,7 @@ var Wrap = require('../../math/Wrap');
  * @constructor
  * @since 3.0.0
  *
- * @param {Phaser.GameObjects.Particles.Types.ParticleEmitterConfig} config - Settings for the Particle Emitter that owns this property.
+ * @param {Phaser.Types.GameObjects.Particles.ParticleEmitterConfig} config - Settings for the Particle Emitter that owns this property.
  * @param {string} key - The name of the property.
  * @param {number} defaultValue - The default value of the property.
  * @param {boolean} [emitOnly=false] - Whether the property can only be modified when a Particle is emitted.
@@ -133,7 +133,7 @@ var EmitterOp = new Class({
          * The callback to run for Particles when they are emitted from the Particle Emitter.
          *
          * @name Phaser.GameObjects.Particles.EmitterOp#onEmit
-         * @type {Phaser.GameObjects.Particles.Types.EmitterOpOnEmitCallback}
+         * @type {Phaser.Types.GameObjects.Particles.EmitterOpOnEmitCallback}
          * @since 3.0.0
          */
         this.onEmit = this.defaultEmit;
@@ -142,7 +142,7 @@ var EmitterOp = new Class({
          * The callback to run for Particles when they are updated.
          *
          * @name Phaser.GameObjects.Particles.EmitterOp#onUpdate
-         * @type {Phaser.GameObjects.Particles.Types.EmitterOpOnUpdateCallback}
+         * @type {Phaser.Types.GameObjects.Particles.EmitterOpOnUpdateCallback}
          * @since 3.0.0
          */
         this.onUpdate = this.defaultUpdate;
@@ -158,7 +158,7 @@ var EmitterOp = new Class({
      * @method Phaser.GameObjects.Particles.EmitterOp#loadConfig
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.Particles.Types.ParticleEmitterConfig} [config] - Settings for the Particle Emitter that owns this property.
+     * @param {Phaser.Types.GameObjects.Particles.ParticleEmitterConfig} [config] - Settings for the Particle Emitter that owns this property.
      * @param {string} [newKey] - The new key to use for this property, if any.
      */
     loadConfig: function (config, newKey)
@@ -275,7 +275,7 @@ var EmitterOp = new Class({
             this.start = this.has(value, 'start') ? value.start : value.min;
             this.end = this.has(value, 'end') ? value.end : value.max;
 
-            var isRandom = (this.hasBoth(value, 'min', 'max') || this.has(value, 'random'));
+            var isRandom = (this.hasBoth(value, 'min', 'max') || !!value.random);
 
             //  A random starting value (using 'min | max' instead of 'start | end' automatically implies a random value)
 
@@ -535,9 +535,9 @@ var EmitterOp = new Class({
     },
 
     /**
-     * An `onEmit` callback that returns an eased value between the
-     * {@link Phaser.GameObjects.Particles.EmitterOp#start} and {@link Phaser.GameObjects.Particles.EmitterOp#end}
-     * range.
+     * An `onEmit` callback for an eased property.
+     *
+     * It prepares the particle for easing by {@link Phaser.GameObjects.Particles.EmitterOp#easeValueUpdate}.
      *
      * @method Phaser.GameObjects.Particles.EmitterOp#easedValueEmit
      * @since 3.0.0
@@ -545,7 +545,7 @@ var EmitterOp = new Class({
      * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
      * @param {string} key - The name of the property.
      *
-     * @return {number} The new value of the property.
+     * @return {number} {@link Phaser.GameObjects.Particles.EmitterOp#start}, as the new value of the property.
      */
     easedValueEmit: function (particle, key)
     {

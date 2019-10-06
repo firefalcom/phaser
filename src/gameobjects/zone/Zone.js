@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var BlendModes = require('../../renderer/BlendModes');
@@ -165,10 +165,14 @@ var Zone = new Class({
         this.width = width;
         this.height = height;
 
-        if (resizeInput && this.input && this.input.hitArea instanceof Rectangle)
+        this.updateDisplayOrigin();
+
+        var input = this.input;
+
+        if (resizeInput && input && !input.customHitArea)
         {
-            this.input.hitArea.width = width;
-            this.input.hitArea.height = height;
+            input.hitArea.width = width;
+            input.hitArea.height = height;
         }
 
         return this;
@@ -234,7 +238,7 @@ var Zone = new Class({
      * @since 3.0.0
      *
      * @param {object} shape - A Geometry shape instance, such as Phaser.Geom.Ellipse, or your own custom shape.
-     * @param {Phaser.Input.Types.HitAreaCallback} callback - A function that will return `true` if the given x/y coords it is sent are within the shape.
+     * @param {Phaser.Types.Input.HitAreaCallback} callback - A function that will return `true` if the given x/y coords it is sent are within the shape.
      *
      * @return {Phaser.GameObjects.Zone} This Game Object.
      */

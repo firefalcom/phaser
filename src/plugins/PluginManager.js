@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -79,7 +79,7 @@ var PluginManager = new Class({
          * A plugin must have been started at least once in order to appear in this list.
          *
          * @name Phaser.Plugins.PluginManager#plugins
-         * @type {Phaser.Plugins.Types.GlobalPlugin[]}
+         * @type {Phaser.Types.Plugins.GlobalPlugin[]}
          * @since 3.8.0
          */
         this.plugins = [];
@@ -159,9 +159,17 @@ var PluginManager = new Class({
             mapping = GetFastValue(entry, 'mapping', null);
             data = GetFastValue(entry, 'data', null);
 
-            if (key && plugin)
+            if (key)
             {
-                this.install(key, plugin, start, mapping, data);
+                if (plugin)
+                {
+                    this.install(key, plugin, start, mapping, data);
+                }
+                else
+                {
+                    console.warn('Missing `plugin` for key: ' + key);
+                }
+                
             }
         }
 
@@ -181,9 +189,16 @@ var PluginManager = new Class({
             plugin = GetFastValue(entry, 'plugin', null);
             mapping = GetFastValue(entry, 'mapping', null);
 
-            if (key && plugin)
+            if (key)
             {
-                this.installScenePlugin(key, plugin, mapping);
+                if (plugin)
+                {
+                    this.installScenePlugin(key, plugin, mapping);
+                }
+                else
+                {
+                    console.warn('Missing `plugin` for key: ' + key);
+                }
             }
         }
 
@@ -486,7 +501,7 @@ var PluginManager = new Class({
      *
      * @param {string} key - The unique plugin key.
      *
-     * @return {Phaser.Plugins.Types.GlobalPlugin} The plugin entry.
+     * @return {Phaser.Types.Plugins.GlobalPlugin} The plugin entry.
      */
     getEntry: function (key)
     {
@@ -764,6 +779,35 @@ var PluginManager = new Class({
         if (creatorCallback)
         {
             GameObjectCreator.register(key, creatorCallback);
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes a previously registered Game Object from the global Game Object Factory and / or Creator.
+     * This is usually called from within your Plugin destruction code to help clean-up after your plugin has been removed.
+     *
+     * @method Phaser.Plugins.PluginManager#removeGameObject
+     * @since 3.19.0
+     *
+     * @param {string} key - The key of the Game Object to be removed from the factories.
+     * @param {boolean} [removeFromFactory=true] - Should the Game Object be removed from the Game Object Factory?
+     * @param {boolean} [removeFromCreator=true] - Should the Game Object be removed from the Game Object Creator?
+     */
+    removeGameObject: function (key, removeFromFactory, removeFromCreator)
+    {
+        if (removeFromFactory === undefined) { removeFromFactory = true; }
+        if (removeFromCreator === undefined) { removeFromCreator = true; }
+
+        if (removeFromFactory)
+        {
+            GameObjectFactory.remove(key);
+        }
+
+        if (removeFromCreator)
+        {
+            GameObjectCreator.remove(key);
         }
 
         return this;

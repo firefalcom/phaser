@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
@@ -37,7 +37,7 @@ var GetValue = require('../../utils/object/GetValue');
  * @constructor
  * @since 3.0.0
  *
- * @param {Phaser.Cameras.Controls.Types.SmoothedKeyControlConfig} config - The Smoothed Key Control configuration object.
+ * @param {Phaser.Types.Cameras.Controls.SmoothedKeyControlConfig} config - The Smoothed Key Control configuration object.
  */
 var SmoothedKeyControl = new Class({
 
@@ -446,9 +446,9 @@ var SmoothedKeyControl = new Class({
         {
             cam.zoom += this._zoom;
 
-            if (cam.zoom < 0.1)
+            if (cam.zoom < 0.001)
             {
-                cam.zoom = 0.1;
+                cam.zoom = 0.001;
             }
         }
     },

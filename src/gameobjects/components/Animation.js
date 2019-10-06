@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var BaseAnimation = require('../../animations/Animation');
@@ -585,6 +585,11 @@ var Animation = new Class({
         var anim = this.currentAnim;
         var gameObject = this.parent;
 
+        if (!anim)
+        {
+            return gameObject;
+        }
+
         //  Should give us 9,007,199,254,740,991 safe repeats
         this.repeatCounter = (this._repeat === -1) ? Number.MAX_VALUE : this._repeat;
 
@@ -728,7 +733,7 @@ var Animation = new Class({
     {
         this._repeat = value;
 
-        this.repeatCounter = 0;
+        this.repeatCounter = (value === -1) ? Number.MAX_VALUE : value;
 
         return this.parent;
     },

@@ -1,12 +1,12 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
 var Components = require('../../gameobjects/components');
-var CONST = require('../../const');
+var GameEvents = require('../../core/events');
 var GameObject = require('../../gameobjects/GameObject');
 var StaticTilemapLayerRender = require('./StaticTilemapLayerRender');
 var TilemapComponents = require('../components');
@@ -359,13 +359,10 @@ var StaticTilemapLayer = new Class({
 
         this.initPipeline('TextureTintPipeline');
 
-        if (scene.sys.game.config.renderType === CONST.WEBGL)
+        scene.sys.game.events.on(GameEvents.CONTEXT_RESTORED, function ()
         {
-            scene.sys.game.renderer.onContextRestored(function ()
-            {
-                this.updateVBOData();
-            }, this);
-        }
+            this.updateVBOData();
+        }, this);
     },
 
     /**
@@ -824,7 +821,7 @@ var StaticTilemapLayer = new Class({
      * @param {(integer|array)} replacements - The tile index, or array of indexes, to change a converted
      * tile to. Set to `null` to leave the tiles unchanged. If an array is given, it is assumed to be a
      * one-to-one mapping with the indexes array.
-     * @param {SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e.
+     * @param {Phaser.Types.GameObjects.Sprite.SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e.
      * scene.make.sprite).
      * @param {Phaser.Scene} [scene=scene the map is within] - The Scene to create the Sprites within.
      * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when determining the world XY
@@ -941,7 +938,7 @@ var StaticTilemapLayer = new Class({
      * @param {integer} [tileY=0] - The topmost tile index (in tile coordinates) to use as the origin of the area to filter.
      * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
      * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      *
      * @return {?Phaser.Tilemaps.Tile}
      */
@@ -966,7 +963,7 @@ var StaticTilemapLayer = new Class({
      * @param {integer} [tileY=0] - The topmost tile index (in tile coordinates) to use as the origin of the area to filter.
      * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
      * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      *
      * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
      */
@@ -989,7 +986,7 @@ var StaticTilemapLayer = new Class({
      * @param {integer} [tileY=0] - The topmost tile index (in tile coordinates) to use as the origin of the area to filter.
      * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
      * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      *
      * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
      */
@@ -1048,7 +1045,7 @@ var StaticTilemapLayer = new Class({
      * @param {integer} [tileY=0] - The topmost tile index (in tile coordinates) to use as the origin of the area.
      * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
      * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      *
      * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
      */
@@ -1067,7 +1064,7 @@ var StaticTilemapLayer = new Class({
      * @param {number} worldY - The topmost tile index (in tile coordinates) to use as the origin of the area to filter.
      * @param {number} width - How many tiles wide from the `tileX` index the area will be.
      * @param {number} height - How many tiles high from the `tileY` index the area will be.
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
      *
      * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
@@ -1085,7 +1082,7 @@ var StaticTilemapLayer = new Class({
      * @since 3.0.0
      *
      * @param {(Phaser.Geom.Circle|Phaser.Geom.Line|Phaser.Geom.Rectangle|Phaser.Geom.Triangle)} shape - A shape in world (pixel) coordinates
-     * @param {Phaser.Tilemaps.Types.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {Phaser.Types.Tilemaps.FilteringOptions} [filteringOptions] - Optional filters to apply when getting the tiles.
      * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
      *
      * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
@@ -1140,7 +1137,7 @@ var StaticTilemapLayer = new Class({
      * @since 3.0.0
      *
      * @param {Phaser.GameObjects.Graphics} graphics - The target Graphics object to draw upon.
-     * @param {Phaser.Tilemaps.Types.StyleConfig} styleConfig - An object specifying the colors to use for the debug drawing.
+     * @param {Phaser.Types.Tilemaps.StyleConfig} styleConfig - An object specifying the colors to use for the debug drawing.
      *
      * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
      */
@@ -1164,12 +1161,14 @@ var StaticTilemapLayer = new Class({
      * collision.
      * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
      * update.
+     * @param {boolean} [updateLayer=true] - If true, updates the current tiles on the layer. Set to
+     * false if no tiles have been placed for significant performance boost.
      *
      * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
      */
-    setCollision: function (indexes, collides, recalculateFaces)
+    setCollision: function (indexes, collides, recalculateFaces, updateLayer)
     {
-        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this.layer);
+        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this.layer, updateLayer);
 
         return this;
     },
@@ -1446,7 +1445,13 @@ var StaticTilemapLayer = new Class({
     {
         if (removeFromTilemap === undefined) { removeFromTilemap = true; }
 
-        // Uninstall this layer only if it is still installed on the LayerData object
+        if (!this.tilemap)
+        {
+            //  Abort, we've already been destroyed
+            return;
+        }
+
+        //  Uninstall this layer only if it is still installed on the LayerData object
         if (this.layer.tilemapLayer === this)
         {
             this.layer.tilemapLayer = undefined;

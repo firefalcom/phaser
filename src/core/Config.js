@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -17,14 +17,14 @@ var ValueToColor = require('../display/color/ValueToColor');
 
 /**
  * @classdesc
- * The active game configuration settings, parsed from a {@link Phaser.Core.Types.GameConfig} object.
+ * The active game configuration settings, parsed from a {@link Phaser.Types.Core.GameConfig} object.
  *
  * @class Config
  * @memberof Phaser.Core
  * @constructor
  * @since 3.0.0
  *
- * @param {Phaser.Core.Types.GameConfig} [GameConfig] - The configuration object for your Phaser Game instance.
+ * @param {Phaser.Types.Core.GameConfig} [GameConfig] - The configuration object for your Phaser Game instance.
  *
  * @see Phaser.Game#config
  */
@@ -271,11 +271,6 @@ var Config = new Class({
         this.inputSmoothFactor = GetValue(config, 'input.smoothFactor', 0);
 
         /**
-         * @const {boolean} Phaser.Core.Config#inputQueue - Should Phaser use a queued input system for native DOM Events or not?
-         */
-        this.inputQueue = GetValue(config, 'input.queue', false);
-
-        /**
          * @const {boolean} Phaser.Core.Config#inputWindowEvents - Should Phaser listen for input events on the Window? If you disable this, events like 'POINTER_UP_OUTSIDE' will no longer fire.
          */
         this.inputWindowEvents = GetValue(config, 'input.windowEvents', true);
@@ -296,7 +291,7 @@ var Config = new Class({
         this.disableContextMenu = GetValue(config, 'disableContextMenu', false);
 
         /**
-         * @const {Phaser.Core.Types.AudioConfig} Phaser.Core.Config#audio - The Audio Configuration object.
+         * @const {Phaser.Types.Core.AudioConfig} Phaser.Core.Config#audio - The Audio Configuration object.
          */
         this.audio = GetValue(config, 'audio');
 
@@ -328,7 +323,7 @@ var Config = new Class({
         }
 
         /**
-         * @const {?Phaser.Core.Types.FPSConfig} Phaser.Core.Config#fps - The Frame Rate Configuration object, as parsed by the Timestep class.
+         * @const {?Phaser.Types.Core.FPSConfig} Phaser.Core.Config#fps - The Frame Rate Configuration object, as parsed by the Timestep class.
          */
         this.fps = GetValue(config, 'fps', null);
 
@@ -341,6 +336,16 @@ var Config = new Class({
          * @const {boolean} Phaser.Core.Config#antialias - When set to `true`, WebGL uses linear interpolation to draw scaled or rotated textures, giving a smooth appearance. When set to `false`, WebGL uses nearest-neighbor interpolation, giving a crisper appearance. `false` also disables antialiasing of the game canvas itself, if the browser supports it, when the game canvas is scaled.
          */
         this.antialias = GetValue(renderConfig, 'antialias', true);
+
+        /**
+         * @const {boolean} Phaser.Core.Config#antialiasGL - Sets the `antialias` property when the WebGL context is created. Setting this value does not impact any subsequent textures that are created, or the canvas style attributes.
+         */
+        this.antialiasGL = GetValue(renderConfig, 'antialiasGL', true);
+
+        /**
+         * @const {boolean} Phaser.Core.Config#desynchronized - When set to `true` it will create a desynchronized context for both 2D and WebGL. See https://developers.google.com/web/updates/2019/05/desynchronized for details.
+         */
+        this.desynchronized = GetValue(renderConfig, 'desynchronized', false);
 
         /**
          * @const {boolean} Phaser.Core.Config#roundPixels - Draw texture-based Game Objects at only whole-integer positions. Game Objects without textures, like Graphics, ignore this property.
@@ -406,17 +411,17 @@ var Config = new Class({
         }
 
         /**
-         * @const {Phaser.Core.Types.BootCallback} Phaser.Core.Config#preBoot - Called before Phaser boots. Useful for initializing anything not related to Phaser that Phaser may require while booting.
+         * @const {Phaser.Types.Core.BootCallback} Phaser.Core.Config#preBoot - Called before Phaser boots. Useful for initializing anything not related to Phaser that Phaser may require while booting.
          */
         this.preBoot = GetValue(config, 'callbacks.preBoot', NOOP);
 
         /**
-         * @const {Phaser.Core.Types.BootCallback} Phaser.Core.Config#postBoot - A function to run at the end of the boot sequence. At this point, all the game systems have started and plugins have been loaded.
+         * @const {Phaser.Types.Core.BootCallback} Phaser.Core.Config#postBoot - A function to run at the end of the boot sequence. At this point, all the game systems have started and plugins have been loaded.
          */
         this.postBoot = GetValue(config, 'callbacks.postBoot', NOOP);
 
         /**
-         * @const {Phaser.Core.Types.PhysicsConfig} Phaser.Core.Config#physics - The Physics Configuration object.
+         * @const {Phaser.Types.Core.PhysicsConfig} Phaser.Core.Config#physics - The Physics Configuration object.
          */
         this.physics = GetValue(config, 'physics', {});
 

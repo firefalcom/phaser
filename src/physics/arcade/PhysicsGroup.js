@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var ArcadeSprite = require('./ArcadeSprite');
@@ -27,8 +27,8 @@ var IsPlainObject = require('../../utils/object/IsPlainObject');
  *
  * @param {Phaser.Physics.Arcade.World} world - The physics simulation.
  * @param {Phaser.Scene} scene - The scene this group belongs to.
- * @param {(Phaser.GameObjects.GameObject[]|Phaser.Physics.Arcade.Types.PhysicsGroupConfig|Phaser.GameObjects.Group.Types.GroupCreateConfig)} [children] - Game Objects to add to this group; or the `config` argument.
- * @param {Phaser.Physics.Arcade.Types.PhysicsGroupConfig|Phaser.GameObjects.Group.Types.GroupCreateConfig} [config] - Settings for this group.
+ * @param {(Phaser.GameObjects.GameObject[]|Phaser.Types.Physics.Arcade.PhysicsGroupConfig|Phaser.Types.GameObjects.Group.GroupCreateConfig)} [children] - Game Objects to add to this group; or the `config` argument.
+ * @param {Phaser.Types.Physics.Arcade.PhysicsGroupConfig|Phaser.Types.GameObjects.Group.GroupCreateConfig} [config] - Settings for this group.
  */
 var PhysicsGroup = new Class({
 
@@ -57,13 +57,14 @@ var PhysicsGroup = new Class({
         else if (Array.isArray(children) && IsPlainObject(children[0]))
         {
             //  children is an array of plain objects
-            config = children;
-            children = null;
+            config = children[0];
 
-            config.forEach(function (singleConfig)
+            var _this = this;
+
+            children.forEach(function (singleConfig)
             {
-                singleConfig.createCallback = this.createCallbackHandler;
-                singleConfig.removeCallback = this.removeCallbackHandler;
+                singleConfig.createCallback = _this.createCallbackHandler;
+                singleConfig.removeCallback = _this.removeCallbackHandler;
             });
         }
         else
@@ -90,7 +91,7 @@ var PhysicsGroup = new Class({
          * This should be either `Phaser.Physics.Arcade.Image`, `Phaser.Physics.Arcade.Sprite`, or a class extending one of those.
          *
          * @name Phaser.Physics.Arcade.Group#classType
-         * @type {Phaser.GameObjects.Group.Types.GroupClassTypeConstructor}
+         * @type {Function}
          * @default ArcadeSprite
          * @since 3.0.0
          */
@@ -110,11 +111,12 @@ var PhysicsGroup = new Class({
          * Default physics properties applied to Game Objects added to the Group or created by the Group. Derived from the `config` argument.
          *
          * @name Phaser.Physics.Arcade.Group#defaults
-         * @type {Phaser.Physics.Arcade.Types.PhysicsGroupDefaults}
+         * @type {Phaser.Types.Physics.Arcade.PhysicsGroupDefaults}
          * @since 3.0.0
          */
         this.defaults = {
             setCollideWorldBounds: GetFastValue(config, 'collideWorldBounds', false),
+            setBoundsRectangle: GetFastValue(config, 'customBoundsRectangle', null),
             setAccelerationX: GetFastValue(config, 'accelerationX', 0),
             setAccelerationY: GetFastValue(config, 'accelerationY', 0),
             setAllowDrag: GetFastValue(config, 'allowDrag', true),
@@ -137,6 +139,11 @@ var PhysicsGroup = new Class({
             setMass: GetFastValue(config, 'mass', 1),
             setImmovable: GetFastValue(config, 'immovable', false)
         };
+
+        if (Array.isArray(children))
+        {
+            config = null;
+        }
 
         Group.call(this, scene, children, config);
     },

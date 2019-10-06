@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -312,7 +312,7 @@ var SceneManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - A unique key used to reference the Scene, i.e. `MainMenu` or `Level1`.
-     * @param {(Phaser.Scene|Phaser.Scenes.Types.SettingsConfig|Phaser.Scenes.Types.CreateSceneFromObjectConfig|function)} sceneConfig - The config for the Scene
+     * @param {(Phaser.Scene|Phaser.Types.Scenes.SettingsConfig|Phaser.Types.Scenes.CreateSceneFromObjectConfig|function)} sceneConfig - The config for the Scene
      * @param {boolean} [autoStart=false] - If `true` the Scene will be started immediately after being added.
      * @param {object} [data] - Optional data object. This will be set as Scene.settings.data and passed to `Scene.init`.
      *
@@ -397,7 +397,7 @@ var SceneManager = new Class({
      * @method Phaser.Scenes.SceneManager#remove
      * @since 3.2.0
      *
-     * @param {(string|Phaser.Scene)} scene - The Scene to be removed.
+     * @param {string} key - A unique key used to reference the Scene, i.e. `MainMenu` or `Level1`.
      *
      * @return {Phaser.Scenes.SceneManager} This SceneManager.
      */
@@ -610,6 +610,11 @@ var SceneManager = new Class({
             settings.status = CONST.CREATING;
 
             scene.create.call(scene, settings.data);
+
+            if (settings.status === CONST.DESTROYED)
+            {
+                return;
+            }
         }
 
         if (settings.isTransition)
@@ -710,7 +715,7 @@ var SceneManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - The key of the Scene.
-     * @param {(string|Phaser.Scenes.Types.SettingsConfig|Phaser.Scenes.Types.CreateSceneFromObjectConfig)} sceneConfig - The Scene config.
+     * @param {(string|Phaser.Types.Scenes.SettingsConfig|Phaser.Types.Scenes.CreateSceneFromObjectConfig)} sceneConfig - The Scene config.
      *
      * @return {Phaser.Scene} The created Scene.
      */
@@ -763,6 +768,11 @@ var SceneManager = new Class({
         {
             for (var propertyKey in sceneConfig.extend)
             {
+                if (!sceneConfig.extend.hasOwnProperty(propertyKey))
+                {
+                    continue;
+                }
+
                 var value = sceneConfig.extend[propertyKey];
 
                 if (propertyKey === 'data' && newScene.hasOwnProperty('data') && typeof value === 'object')
@@ -788,7 +798,7 @@ var SceneManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - The key to check in the Scene config.
-     * @param {(Phaser.Scene|Phaser.Scenes.Types.SettingsConfig|function)} sceneConfig - The Scene config.
+     * @param {(Phaser.Scene|Phaser.Types.Scenes.SettingsConfig|function)} sceneConfig - The Scene config.
      *
      * @return {string} The Scene key.
      */
@@ -823,7 +833,7 @@ var SceneManager = new Class({
 
     /**
      * Returns an array of all the current Scenes being managed by this Scene Manager.
-     * 
+     *
      * You can filter the output by the active state of the Scene and choose to have
      * the array returned in normal or reversed order.
      *
@@ -1161,25 +1171,25 @@ var SceneManager = new Class({
                 scene.sys.start(data);
 
                 var loader;
-    
+
                 if (scene.sys.load)
                 {
                     loader = scene.sys.load;
                 }
-    
+
                 //  Files payload?
                 if (loader && scene.sys.settings.hasOwnProperty('pack'))
                 {
                     loader.reset();
-    
+
                     if (loader.addPack({ payload: scene.sys.settings.pack }))
                     {
                         scene.sys.settings.status = CONST.LOADING;
-    
+
                         loader.once(LoaderEvents.COMPLETE, this.payloadComplete, this);
-    
+
                         loader.start();
-    
+
                         return this;
                     }
                 }

@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -17,6 +17,7 @@ module.exports = {
     PolyDecomp: require('./poly-decomp'),
     Sprite: require('./MatterSprite'),
     TileBody: require('./MatterTileBody'),
+    PhysicsEditorParser: require('./PhysicsEditorParser'),
     World: require('./World')
 
 };
@@ -33,6 +34,15 @@ module.exports = {
  *
  * @class MatterJS.Body
  * @since 3.0.0
+ */
+
+/**
+ * @classdesc
+ * The `Matter.Bodies` module contains factory methods for creating rigid body models 
+ * with commonly used body configurations (such as rectangles, circles and other polygons).
+ *
+ * @class MatterJS.Bodies
+ * @since 3.18.0
  */
 
 /**

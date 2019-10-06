@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
@@ -10,17 +10,6 @@ var GetValue = require('../../utils/object/GetValue');
 var MeasureText = require('./MeasureText');
 
 //  Key: [ Object Key, Default Value ]
-
-/**
- * A custom function that will be responsible for wrapping the text.
- * @callback TextStyleWordWrapCallback
- *
- * @param {string} text - The string to wrap.
- * @param {Phaser.GameObjects.Text} textObject - The Text instance.
- *
- * @return {(string|string[])} Should return the wrapped lines either as an array of lines or as a string with
- * newline characters in place to indicate where breaks should happen.
- */
 
 var propertyMap = {
     fontFamily: [ 'fontFamily', 'Courier' ],
@@ -65,7 +54,7 @@ var propertyMap = {
  * @since 3.0.0
  *
  * @param {Phaser.GameObjects.Text} text - The Text object that this TextStyle is styling.
- * @param {object} style - The style settings to set.
+ * @param {Phaser.Types.GameObjects.Text.TextStyle} style - The style settings to set.
  */
 var TextStyle = new Class({
 
@@ -286,7 +275,7 @@ var TextStyle = new Class({
         this.testString;
 
         /**
-         * The amount of horizontal padding adding to the width of the text when calculating the font metrics.
+         * The amount of horizontal padding added to the width of the text when calculating the font metrics.
          *
          * @name Phaser.GameObjects.TextStyle#baselineX
          * @type {number}
@@ -296,7 +285,7 @@ var TextStyle = new Class({
         this.baselineX;
 
         /**
-         * The amount of vertical padding adding to the width of the text when calculating the font metrics.
+         * The amount of vertical padding added to the height of the text when calculating the font metrics.
          *
          * @name Phaser.GameObjects.TextStyle#baselineY
          * @type {number}
@@ -351,7 +340,7 @@ var TextStyle = new Class({
      * @method Phaser.GameObjects.TextStyle#setStyle
      * @since 3.0.0
      *
-     * @param {object} style - The style settings to set.
+     * @param {Phaser.Types.GameObjects.Text.TextStyle} style - The style settings to set.
      * @param {boolean} [updateText=true] - Whether to update the text immediately.
      * @param {boolean} [setDefaults=false] - Use the default values is not set, or the local values.
      *
@@ -960,14 +949,16 @@ var TextStyle = new Class({
     },
 
     /**
-     * Set the text alignment.
-     *
-     * Expects values like `'left'`, `'right'`, `'center'` or `'justified'`.
+     * Set the alignment of the text in this Text object.
+     * 
+     * The argument can be one of: `left`, `right`, `center` or `justify`.
+     * 
+     * Alignment only works if the Text object has more than one line of text.
      *
      * @method Phaser.GameObjects.TextStyle#setAlign
      * @since 3.0.0
      *
-     * @param {string} align - The text alignment.
+     * @param {string} [align='left'] - The text alignment for multi-line text.
      *
      * @return {Phaser.GameObjects.Text} The parent Text object.
      */
@@ -1005,7 +996,7 @@ var TextStyle = new Class({
      * @method Phaser.GameObjects.TextStyle#getTextMetrics
      * @since 3.0.0
      *
-     * @return {BitmapTextMetrics} The text metrics.
+     * @return {Phaser.Types.GameObjects.Text.TextMetrics} The text metrics.
      */
     getTextMetrics: function ()
     {

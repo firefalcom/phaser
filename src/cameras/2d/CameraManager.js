@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Camera = require('./Camera');
@@ -9,6 +9,7 @@ var Class = require('../../utils/Class');
 var GetFastValue = require('../../utils/object/GetFastValue');
 var PluginCache = require('../../plugins/PluginCache');
 var RectangleContains = require('../../geom/rectangle/Contains');
+var ScaleEvents = require('../../scale/events');
 var SceneEvents = require('../../scene/events');
 
 /**
@@ -158,6 +159,8 @@ var CameraManager = new Class({
 
         //  Create a default camera
         this.default = new Camera(0, 0, sys.scale.width, sys.scale.height).setScene(this.scene);
+
+        sys.game.scale.on(ScaleEvents.RESIZE, this.onResize, this);
 
         this.systems.events.once(SceneEvents.DESTROY, this.destroy, this);
     },
@@ -385,12 +388,12 @@ var CameraManager = new Class({
     /**
      * Populates this Camera Manager based on the given configuration object, or an array of config objects.
      * 
-     * See the `Phaser.Cameras.Scene2D.Types.CameraConfig` documentation for details of the object structure.
+     * See the `Phaser.Types.Cameras.Scene2D.CameraConfig` documentation for details of the object structure.
      *
      * @method Phaser.Cameras.Scene2D.CameraManager#fromJSON
      * @since 3.0.0
      *
-     * @param {(Phaser.Cameras.Scene2D.Types.CameraConfig|Phaser.Cameras.Scene2D.Types.CameraConfig[])} config - A Camera configuration object, or an array of them, to be added to this Camera Manager.
+     * @param {(Phaser.Types.Cameras.Scene2D.CameraConfig|Phaser.Types.Cameras.Scene2D.CameraConfig[])} config - A Camera configuration object, or an array of them, to be added to this Camera Manager.
      *
      * @return {Phaser.Cameras.Scene2D.CameraManager} This Camera Manager instance.
      */
@@ -646,6 +649,31 @@ var CameraManager = new Class({
     },
 
     /**
+     * The event handler that manages the `resize` event dispatched by the Scale Manager.
+     *
+     * @method Phaser.Cameras.Scene2D.CameraManager#onResize
+     * @since 3.18.0
+     *
+     * @param {Phaser.Structs.Size} gameSize - The default Game Size object. This is the un-modified game dimensions.
+     * @param {Phaser.Structs.Size} baseSize - The base Size object. The game dimensions multiplied by the resolution. The canvas width / height values match this.
+     */
+    onResize: function (gameSize, baseSize, displaySize, resolution, previousWidth, previousHeight)
+    {
+        for (var i = 0; i < this.cameras.length; i++)
+        {
+            var cam = this.cameras[i];
+
+            //  if camera is at 0x0 and was the size of the previous game size, then we can safely assume it
+            //  should be updated to match the new game size too
+
+            if (cam._x === 0 && cam._y === 0 && cam._width === previousWidth && cam._height === previousHeight)
+            {
+                cam.setSize(baseSize.width, baseSize.height);
+            }
+        }
+    },
+
+    /**
      * Resizes all cameras to the given dimensions.
      *
      * @method Phaser.Cameras.Scene2D.CameraManager#resize
@@ -681,8 +709,6 @@ var CameraManager = new Class({
 
         this.cameras = [];
 
-        this.default.destroy();
-
         var eventEmitter = this.systems.events;
 
         eventEmitter.off(SceneEvents.UPDATE, this.update, this);
@@ -700,6 +726,8 @@ var CameraManager = new Class({
     destroy: function ()
     {
         this.shutdown();
+
+        this.default.destroy();
 
         this.scene.sys.events.off(SceneEvents.START, this.start, this);
 

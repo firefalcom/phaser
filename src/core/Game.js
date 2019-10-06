@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var AddToDOM = require('../dom/AddToDOM');
@@ -57,7 +57,7 @@ if (typeof PLUGIN_FBINSTANT)
  * @fires Phaser.Core.Events#VISIBLE
  * @since 3.0.0
  *
- * @param {Phaser.Core.Types.GameConfig} [GameConfig] - The configuration object for your Phaser Game instance.
+ * @param {Phaser.Types.Core.GameConfig} [GameConfig] - The configuration object for your Phaser Game instance.
  */
 var Game = new Class({
 
@@ -248,7 +248,7 @@ var Game = new Class({
          * You can disable the inclusion of the Sound Manager in your build by toggling the webpack `FEATURE_SOUND` flag.
          *
          * @name Phaser.Game#sound
-         * @type {Phaser.Sound.BaseSoundManager}
+         * @type {(Phaser.Sound.NoAudioSoundManager|Phaser.Sound.HTML5AudioSoundManager|Phaser.Sound.WebAudioSoundManager)}
          * @since 3.0.0
          */
         this.sound = null;
@@ -604,6 +604,7 @@ var Game = new Class({
 
     /**
      * Returns the current game frame.
+     * 
      * When the game starts running, the frame is incremented every time Request Animation Frame, or Set Timeout, fires.
      *
      * @method Phaser.Game#getFrame
@@ -617,8 +618,7 @@ var Game = new Class({
     },
 
     /**
-     * Returns the current game timestamp.
-     * When the game starts running, the frame is incremented every time Request Animation Frame, or Set Timeout, fires.
+     * Returns the time that the current game step started at, as based on `performance.now`.
      *
      * @method Phaser.Game#getTime
      * @since 3.16.0
@@ -627,7 +627,7 @@ var Game = new Class({
      */
     getTime: function ()
     {
-        return this.loop.frame.time;
+        return this.loop.now;
     },
 
     /**

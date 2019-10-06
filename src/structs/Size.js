@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Clamp = require('../math/Clamp');
@@ -482,7 +482,6 @@ var Size = new Class({
         if ((fit && this.aspectRatio > newRatio) || (!fit && this.aspectRatio < newRatio))
         {
             //  We need to change the height to fit the width
-            // height = width / this.aspectRatio;
 
             width = SnapFloor(width, snap.x);
 
@@ -499,7 +498,6 @@ var Size = new Class({
         else if ((fit && this.aspectRatio < newRatio) || (!fit && this.aspectRatio > newRatio))
         {
             //  We need to change the width to fit the height
-            // width = height * this.aspectRatio;
 
             height = SnapFloor(height, snap.y);
 

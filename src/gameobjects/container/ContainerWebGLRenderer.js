@@ -2,7 +2,7 @@
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Felipe Alfonso <@bitnenfer>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -52,11 +52,21 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
         renderer.setBlendMode(0);
     }
 
-    var alpha = container._alpha;
+    // var alpha = container._alpha;
+
+    var alphaTopLeft = container.alphaTopLeft;
+    var alphaTopRight = container.alphaTopRight;
+    var alphaBottomLeft = container.alphaBottomLeft;
+    var alphaBottomRight = container.alphaBottomRight;
+
     var scrollFactorX = container.scrollFactorX;
     var scrollFactorY = container.scrollFactorY;
 
-    for (var i = 0; i < children.length; i++)
+    var list = children;
+    var childCount = children.length;
+    var current = renderer.mask;
+
+    for (var i = 0; i < childCount; i++)
     {
         var child = children[i];
 
@@ -65,7 +75,28 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
             continue;
         }
 
-        var childAlpha = child._alpha;
+        var childAlphaTopLeft;
+        var childAlphaTopRight;
+        var childAlphaBottomLeft;
+        var childAlphaBottomRight;
+
+        if (child.alphaTopLeft !== undefined)
+        {
+            childAlphaTopLeft = child.alphaTopLeft;
+            childAlphaTopRight = child.alphaTopRight;
+            childAlphaBottomLeft = child.alphaBottomLeft;
+            childAlphaBottomRight = child.alphaBottomRight;
+        }
+        else
+        {
+            var childAlpha = child.alpha;
+
+            childAlphaTopLeft = childAlpha;
+            childAlphaTopRight = childAlpha;
+            childAlphaBottomLeft = childAlpha;
+            childAlphaBottomRight = childAlpha;
+        }
+
         var childScrollFactorX = child.scrollFactorX;
         var childScrollFactorY = child.scrollFactorY;
 
@@ -75,15 +106,25 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
             renderer.setBlendMode(child.blendMode);
         }
 
-        if (child.mask)
+        var mask = child.mask;
+
+        current = renderer.currentMask;
+
+        if (current.mask && current.mask !== mask)
+        {
+            //  Render out the previously set mask
+            current.mask.postRenderWebGL(renderer, current.camera);
+        }
+
+        if (mask && current.mask !== mask)
         {
             var childTransformMatrix;
 
-            if( transformMatrix)
+            if(transformMatrix)
             {
                 childTransformMatrix = child.localTransform;
 
-                if( childTransformMatrix )
+                if(childTransformMatrix)
                 {
                     childTransformMatrix.loadIdentity();
                     childTransformMatrix.multiply(transformMatrix);
@@ -97,24 +138,34 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
                 }
             }
 
-            child.mask.preRenderWebGL(renderer, child, camera, childTransformMatrix);
+            mask.preRenderWebGL(renderer, child, camera, childTransformMatrix);
         }
+
+        var type = child.type;
+
+        if (type !== renderer.currentType)
+        {
+            renderer.newType = true;
+            renderer.currentType = type;
+        }
+
+        renderer.nextTypeMatch = (i < childCount - 1) ? (list[i + 1].type === renderer.currentType) : false;
 
         //  Set parent values
         child.setScrollFactor(childScrollFactorX * scrollFactorX, childScrollFactorY * scrollFactorY);
-        child.setAlpha(childAlpha * alpha);
+
+        child.setAlpha(childAlphaTopLeft * alphaTopLeft, childAlphaTopRight * alphaTopRight, childAlphaBottomLeft * alphaBottomLeft, childAlphaBottomRight * alphaBottomRight);
 
         //  Render
         child.renderWebGL(renderer, child, interpolationPercentage, camera, transformMatrix);
 
         //  Restore original values
-        child.setAlpha(childAlpha);
+
+        child.setAlpha(childAlphaTopLeft, childAlphaTopRight, childAlphaBottomLeft, childAlphaBottomRight);
+
         child.setScrollFactor(childScrollFactorX, childScrollFactorY);
 
-        if (child.mask)
-        {
-            child.mask.postRenderWebGL(renderer, camera);
-        }
+        renderer.newType = false;
     }
 };
 

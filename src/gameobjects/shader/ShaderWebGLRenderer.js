@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -30,39 +30,47 @@ var ShaderWebGLRenderer = function (renderer, src, interpolationPercentage, came
 
     renderer.clearPipeline();
 
-    var camMatrix = src._tempMatrix1;
-    var shapeMatrix = src._tempMatrix2;
-    var calcMatrix = src._tempMatrix3;
-
-    shapeMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
-
-    camMatrix.copyFrom(camera.matrix);
-
-    if (parentMatrix)
+    if (src.renderToTexture)
     {
-        //  Multiply the camera by the parent matrix
-        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
-
-        //  Undo the camera scroll
-        shapeMatrix.e = src.x;
-        shapeMatrix.f = src.y;
+        src.load();
+        src.flush();
     }
     else
     {
-        shapeMatrix.e -= camera.scrollX * src.scrollFactorX;
-        shapeMatrix.f -= camera.scrollY * src.scrollFactorY;
+        var camMatrix = src._tempMatrix1;
+        var shapeMatrix = src._tempMatrix2;
+        var calcMatrix = src._tempMatrix3;
+    
+        shapeMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+    
+        camMatrix.copyFrom(camera.matrix);
+    
+        if (parentMatrix)
+        {
+            //  Multiply the camera by the parent matrix
+            camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+    
+            //  Undo the camera scroll
+            shapeMatrix.e = src.x;
+            shapeMatrix.f = src.y;
+        }
+        else
+        {
+            shapeMatrix.e -= camera.scrollX * src.scrollFactorX;
+            shapeMatrix.f -= camera.scrollY * src.scrollFactorY;
+        }
+    
+        camMatrix.multiply(shapeMatrix, calcMatrix);
+    
+        //  Renderer size changed?
+        if (renderer.width !== src._rendererWidth || renderer.height !== src._rendererHeight)
+        {
+            src.projOrtho(0, renderer.width, renderer.height, 0);
+        }
+    
+        src.load(calcMatrix.matrix);
+        src.flush();
     }
-
-    camMatrix.multiply(shapeMatrix, calcMatrix);
-
-    //  Renderer size changed?
-    if (renderer.width !== src._rendererWidth || renderer.height !== src._rendererHeight)
-    {
-        src.projOrtho(0, renderer.width, renderer.height, 0);
-    }
-
-    src.load(calcMatrix.matrix);
-    src.flush();
 
     renderer.rebindPipeline(pipeline);
 };

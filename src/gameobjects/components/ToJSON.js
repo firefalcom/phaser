@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 /**
@@ -14,7 +14,7 @@
  *
  * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to export as JSON.
  *
- * @return {Phaser.GameObjects.Types.JSONGameObject} A JSON representation of the Game Object.
+ * @return {Phaser.Types.GameObjects.JSONGameObject} A JSON representation of the Game Object.
  */
 var ToJSON = function (gameObject)
 {
@@ -37,7 +37,6 @@ var ToJSON = function (gameObject)
         rotation: gameObject.rotation,
         alpha: gameObject.alpha,
         visible: gameObject.visible,
-        scaleMode: gameObject.scaleMode,
         blendMode: gameObject.blendMode,
         textureKey: '',
         frameKey: '',

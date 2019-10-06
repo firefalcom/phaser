@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Actions = require('../../actions/');
@@ -27,8 +27,8 @@ var Sprite = require('../sprite/Sprite');
  * @constructor
  * @since 3.0.0
  * @param {Phaser.Scene} scene - The scene this group belongs to.
- * @param {(Phaser.GameObjects.GameObject[]|Phaser.GameObjects.Group.Types.GroupConfig|Phaser.GameObjects.Group.Types.GroupCreateConfig)} [children] - Game Objects to add to this group; or the `config` argument.
- * @param {Phaser.GameObjects.Group.Types.GroupConfig|Phaser.GameObjects.Group.Types.GroupCreateConfig} [config] - Settings for this group. If `key` is set, Phaser.GameObjects.Group#createMultiple is also called with these settings.
+ * @param {(Phaser.GameObjects.GameObject[]|Phaser.Types.GameObjects.Group.GroupConfig|Phaser.Types.GameObjects.Group.GroupCreateConfig)} [children] - Game Objects to add to this group; or the `config` argument.
+ * @param {Phaser.Types.GameObjects.Group.GroupConfig|Phaser.Types.GameObjects.Group.GroupCreateConfig} [config] - Settings for this group. If `key` is set, Phaser.GameObjects.Group#createMultiple is also called with these settings.
  *
  * @see Phaser.Physics.Arcade.Group
  * @see Phaser.Physics.Arcade.StaticGroup
@@ -107,11 +107,22 @@ var Group = new Class({
          * The class to create new group members from.
          *
          * @name Phaser.GameObjects.Group#classType
-         * @type {Phaser.GameObjects.Group.Types.GroupClassTypeConstructor}
+         * @type {Function}
          * @since 3.0.0
          * @default Phaser.GameObjects.Sprite
          */
         this.classType = GetFastValue(config, 'classType', Sprite);
+
+        /**
+         * The name of this group.
+         * Empty by default and never populated by Phaser, this is left for developers to use.
+         *
+         * @name Phaser.GameObjects.Group#name
+         * @type {string}
+         * @default ''
+         * @since 3.18.0
+         */
+        this.name = GetFastValue(config, 'name', '');
 
         /**
          * Whether this group runs its {@link Phaser.GameObjects.Group#preUpdate} method
@@ -169,7 +180,7 @@ var Group = new Class({
          * A function to be called when adding or creating group members.
          *
          * @name Phaser.GameObjects.Group#createCallback
-         * @type {?Phaser.GameObjects.Group.Types.GroupCallback}
+         * @type {?Phaser.Types.GameObjects.Group.GroupCallback}
          * @since 3.0.0
          */
         this.createCallback = GetFastValue(config, 'createCallback', null);
@@ -178,7 +189,7 @@ var Group = new Class({
          * A function to be called when removing group members.
          *
          * @name Phaser.GameObjects.Group#removeCallback
-         * @type {?Phaser.GameObjects.Group.Types.GroupCallback}
+         * @type {?Phaser.Types.GameObjects.Group.GroupCallback}
          * @since 3.0.0
          */
         this.removeCallback = GetFastValue(config, 'removeCallback', null);
@@ -187,7 +198,7 @@ var Group = new Class({
          * A function to be called when creating several group members at once.
          *
          * @name Phaser.GameObjects.Group#createMultipleCallback
-         * @type {?Phaser.GameObjects.Group.Types.GroupMultipleCreateCallback}
+         * @type {?Phaser.Types.GameObjects.Group.GroupMultipleCreateCallback}
          * @since 3.0.0
          */
         this.createMultipleCallback = GetFastValue(config, 'createMultipleCallback', null);
@@ -257,7 +268,7 @@ var Group = new Class({
      * @method Phaser.GameObjects.Group#createMultiple
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.Group.Types.GroupCreateConfig|Phaser.GameObjects.Group.Types.GroupCreateConfig[]} config - Creation settings. This can be a single configuration object or an array of such objects, which will be applied in turn.
+     * @param {Phaser.Types.GameObjects.Group.GroupCreateConfig|Phaser.Types.GameObjects.Group.GroupCreateConfig[]} config - Creation settings. This can be a single configuration object or an array of such objects, which will be applied in turn.
      *
      * @return {any[]} The newly created Game Objects.
      */
@@ -294,7 +305,7 @@ var Group = new Class({
      * @method Phaser.GameObjects.Group#createFromConfig
      * @since 3.0.0
      *
-     * @param {Phaser.GameObjects.Group.Types.GroupCreateConfig} options - Creation settings.
+     * @param {Phaser.Types.GameObjects.Group.GroupCreateConfig} options - Creation settings.
      *
      * @return {any[]} The newly created Game Objects.
      */
@@ -338,19 +349,30 @@ var Group = new Class({
         var randomKey = GetFastValue(options, 'randomKey', false);
         var randomFrame = GetFastValue(options, 'randomFrame', false);
         var yoyo = GetFastValue(options, 'yoyo', false);
-        var quantity = GetFastValue(options, 'frameQuantity', 1);
+        var quantity = GetFastValue(options, 'quantity', false);
+        var frameQuantity = GetFastValue(options, 'frameQuantity', 1);
         var max = GetFastValue(options, 'max', 0);
 
-        //  If a grid is set we use that to override the quantity?
+        //  If a quantity value is set we use that to override the frameQuantity
 
         var range = Range(key, frame, {
             max: max,
-            qty: quantity,
+            qty: (quantity) ? quantity : frameQuantity,
             random: randomKey,
             randomB: randomFrame,
             repeat: repeat,
             yoyo: yoyo
         });
+
+        if (options.createCallback)
+        {
+            this.createCallback = options.createCallback;
+        }
+
+        if (options.removeCallback)
+        {
+            this.removeCallback = options.removeCallback;
+        }
 
         for (var c = 0; c < range.length; c++)
         {
@@ -1112,22 +1134,7 @@ var Group = new Class({
             return;
         }
 
-        if (destroyChildren)
-        {
-            var children = this.children;
-
-            for (var i = 0; i < children.size; i++)
-            {
-                var gameObject = children.entries[i];
-
-                //  Remove the event hook first or it'll go all recursive hell on us
-                gameObject.off(Events.DESTROY, this.remove, this);
-
-                gameObject.destroy();
-            }
-        }
-
-        this.children.clear();
+        this.clear(false, destroyChildren);
 
         this.scene = undefined;
         this.children = undefined;

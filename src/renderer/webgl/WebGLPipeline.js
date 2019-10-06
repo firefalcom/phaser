@@ -2,7 +2,7 @@
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Felipe Alfonso <@bitnenfer>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../../utils/Class');
@@ -275,6 +275,10 @@ var WebGLPipeline = new Class({
             offset: offset
         });
 
+        this.vertexComponentCount = Utils.getComponentCount(
+            this.attributes,
+            this.gl
+        );
         return this;
     },
 

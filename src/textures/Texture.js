@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -175,6 +175,35 @@ var Texture = new Class({
         this.frameTotal++;
 
         return frame;
+    },
+
+    /**
+     * Removes the given Frame from this Texture. The Frame is destroyed immediately.
+     * 
+     * Any Game Objects using this Frame should stop using it _before_ you remove it,
+     * as it does not happen automatically.
+     *
+     * @method Phaser.Textures.Texture#remove
+     * @since 3.19.0
+     *
+     * @param {string} name - The key of the Frame to remove.
+     *
+     * @return {boolean} True if a Frame with the matching key was removed from this Texture.
+     */
+    remove: function (name)
+    {
+        if (this.has(name))
+        {
+            var frame = this.get(name);
+
+            frame.destroy();
+
+            delete this.frames[name];
+
+            return true;
+        }
+
+        return false;
     },
 
     /**

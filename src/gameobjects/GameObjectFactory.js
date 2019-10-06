@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -174,6 +174,14 @@ GameObjectFactory.register = function (factoryType, factoryFunction)
     if (!GameObjectFactory.prototype.hasOwnProperty(factoryType))
     {
         GameObjectFactory.prototype[factoryType] = factoryFunction;
+    }
+};
+
+GameObjectFactory.remove = function (factoryType)
+{
+    if (GameObjectFactory.prototype.hasOwnProperty(factoryType))
+    {
+        delete GameObjectFactory.prototype[factoryType];
     }
 };
 

@@ -2,9 +2,10 @@
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
+var Base64ToArrayBuffer = require('../../utils/base64/Base64ToArrayBuffer');
 var BaseSoundManager = require('../BaseSoundManager');
 var Class = require('../../utils/Class');
 var Events = require('../events');
@@ -120,7 +121,7 @@ var WebAudioSoundManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - Asset key for the sound.
-     * @param {Phaser.Sound.Types.SoundConfig} [config] - An optional config object containing default sound settings.
+     * @param {Phaser.Types.Sound.SoundConfig} [config] - An optional config object containing default sound settings.
      *
      * @return {Phaser.Sound.WebAudioSound} The new sound instance.
      */
@@ -131,6 +132,87 @@ var WebAudioSoundManager = new Class({
         this.sounds.push(sound);
 
         return sound;
+    },
+
+    /**
+     * Decode audio data into a format ready for playback via Web Audio.
+     * 
+     * The audio data can be a base64 encoded string, an audio media-type data uri, or an ArrayBuffer instance.
+     * 
+     * The `audioKey` is the key that will be used to save the decoded audio to the audio cache.
+     * 
+     * Instead of passing a single entry you can instead pass an array of `Phaser.Types.Sound.DecodeAudioConfig`
+     * objects as the first and only argument.
+     * 
+     * Decoding is an async process, so be sure to listen for the events to know when decoding has completed.
+     * 
+     * Once the audio has decoded it can be added to the Sound Manager or played via its key.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#decodeAudio
+     * @fires Phaser.Sound.Events#DECODED
+     * @fires Phaser.Sound.Events#DECODED_ALL
+     * @since 3.18.0
+     *
+     * @param {(Phaser.Types.Sound.DecodeAudioConfig[]|string)} [audioKey] - The string-based key to be used to reference the decoded audio in the audio cache, or an array of audio config objects.
+     * @param {(ArrayBuffer|string)} [audioData] - The audio data, either a base64 encoded string, an audio media-type data uri, or an ArrayBuffer instance.
+     */
+    decodeAudio: function (audioKey, audioData)
+    {
+        var audioFiles;
+
+        if (!Array.isArray(audioKey))
+        {
+            audioFiles = [ { key: audioKey, data: audioData } ];
+        }
+        else
+        {
+            audioFiles = audioKey;
+        }
+
+        var cache = this.game.cache.audio;
+        var remaining = audioFiles.length;
+
+        for (var i = 0; i < audioFiles.length; i++)
+        {
+            var entry = audioFiles[i];
+
+            var key = entry.key;
+            var data = entry.data;
+
+            if (typeof data === 'string')
+            {
+                data = Base64ToArrayBuffer(data);
+            }
+
+            var success = function (key, audioBuffer)
+            {
+                cache.add(key, audioBuffer);
+    
+                this.emit(Events.DECODED, key);
+
+                remaining--;
+
+                if (remaining === 0)
+                {
+                    this.emit(Events.DECODED_ALL);
+                }
+            }.bind(this, key);
+    
+            var failure = function (key, error)
+            {
+                //  eslint-disable-next-line no-console
+                console.error('Error decoding audio: ' + key + ' - ', error ? error.message : '');
+
+                remaining--;
+
+                if (remaining === 0)
+                {
+                    this.emit(Events.DECODED_ALL);
+                }
+            }.bind(this, key);
+
+            this.context.decodeAudioData(data, success, failure);
+        }
     },
 
     /**
@@ -156,6 +238,11 @@ var WebAudioSoundManager = new Class({
                     document.body.removeEventListener('click', unlockHandler);
     
                     _this.unlocked = true;
+                }, function ()
+                {
+                    document.body.removeEventListener('touchstart', unlockHandler);
+                    document.body.removeEventListener('touchend', unlockHandler);
+                    document.body.removeEventListener('click', unlockHandler);
                 });
             }
         };
@@ -225,9 +312,7 @@ var WebAudioSoundManager = new Class({
 
             this.context.close().then(function ()
             {
-
                 _this.context = null;
-
             });
         }
 

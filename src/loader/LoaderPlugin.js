@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var Class = require('../utils/Class');
@@ -186,7 +186,7 @@ var LoaderPlugin = new Class({
          * xhr specific global settings (can be overridden on a per-file basis)
          *
          * @name Phaser.Loader.LoaderPlugin#xhr
-         * @type {Phaser.Loader.Types.XHRSettingsObject}
+         * @type {Phaser.Types.Loader.XHRSettingsObject}
          * @since 3.0.0
          */
         this.xhr = XHRSettings(
@@ -312,6 +312,16 @@ var LoaderPlugin = new Class({
          * @since 3.0.0
          */
         this.state = CONST.LOADER_IDLE;
+
+        /**
+         * The current index being used by multi-file loaders to avoid key clashes.
+         *
+         * @name Phaser.Loader.LoaderPlugin#multiKeyIndex
+         * @type {integer}
+         * @private
+         * @since 3.20.0
+         */
+        this.multiKeyIndex = 0;
 
         scene.sys.events.once(SceneEvents.BOOT, this.boot, this);
         scene.sys.events.on(SceneEvents.START, this.pluginStart, this);

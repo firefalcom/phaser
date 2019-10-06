@@ -1,14 +1,14 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2019 Photon Storm Ltd.
- * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
 var AddToDOM = require('../../../dom/AddToDOM');
 var CanvasPool = require('../../../display/canvas/CanvasPool');
 var Class = require('../../../utils/Class');
 var Components = require('../../components');
-var CONST = require('../../../const');
+var GameEvents = require('../../../core/events');
 var GameObject = require('../../GameObject');
 var GetTextSize = require('../GetTextSize');
 var GetValue = require('../../../utils/object/GetValue');
@@ -81,7 +81,7 @@ var TextStyle = require('../TextStyle');
  * @param {number} x - The horizontal position of this Game Object in the world.
  * @param {number} y - The vertical position of this Game Object in the world.
  * @param {(string|string[])} text - The text this Text object will display.
- * @param {object} style - The text style configuration object.
+ * @param {Phaser.Types.GameObjects.Text.TextStyle} style - The text style configuration object.
  */
 var Text = new Class({
 
@@ -185,7 +185,7 @@ var Text = new Class({
          * @private
          * @since 3.12.0
          */
-        this._text = '';
+        this._text = undefined;
 
         /**
          * Specify a padding value which is added to the line width and height when calculating the Text size.
@@ -276,6 +276,8 @@ var Text = new Class({
 
         this.initRTL();
 
+        this.setText(text);
+
         if (style && style.padding)
         {
             this.setPadding(style.padding);
@@ -286,15 +288,10 @@ var Text = new Class({
             this.lineSpacing = style.lineSpacing;
         }
 
-        this.setText(text);
-
-        if (scene.sys.game.config.renderType === CONST.WEBGL)
+        scene.sys.game.events.on(GameEvents.CONTEXT_RESTORED, function ()
         {
-            scene.sys.game.renderer.onContextRestored(function ()
-            {
-                this.dirty = true;
-            }, this);
-        }
+            this.dirty = true;
+        }, this);
     },
 
     /**
@@ -946,14 +943,16 @@ var Text = new Class({
     },
 
     /**
-     * Set the text alignment.
-     *
-     * Expects values like `'left'`, `'right'`, `'center'` or `'justified'`.
+     * Set the alignment of the text in this Text object.
+     * 
+     * The argument can be one of: `left`, `right`, `center` or `justify`.
+     * 
+     * Alignment only works if the Text object has more than one line of text.
      *
      * @method Phaser.GameObjects.Text#setAlign
      * @since 3.0.0
      *
-     * @param {string} align - The text alignment.
+     * @param {string} [align='left'] - The text alignment for multi-line text.
      *
      * @return {Phaser.GameObjects.Text} This Text object.
      */
@@ -1015,7 +1014,7 @@ var Text = new Class({
      * @method Phaser.GameObjects.Text#setPadding
      * @since 3.0.0
      *
-     * @param {(number|object)} left - The left padding value, or a padding config object.
+     * @param {(number|Phaser.Types.GameObjects.Text.TextPadding)} left - The left padding value, or a padding config object.
      * @param {number} top - The top padding value.
      * @param {number} right - The right padding value.
      * @param {number} bottom - The bottom padding value.
@@ -1118,36 +1117,37 @@ var Text = new Class({
 
         var padding = this.padding;
 
-        var w = textSize.width + padding.left + padding.right;
-        var h = textSize.height + padding.top + padding.bottom;
+        var textWidth;
 
         if (style.fixedWidth === 0)
         {
-            this.width = w;
+            this.width = textSize.width + padding.left + padding.right;
+
+            textWidth = textSize.width;
         }
         else
         {
             this.width = style.fixedWidth;
+
+            textWidth = this.width - padding.left - padding.right;
+
+            if (textWidth < textSize.width)
+            {
+                textWidth = textSize.width;
+            }
         }
 
         if (style.fixedHeight === 0)
         {
-            this.height = h;
+            this.height = textSize.height + padding.top + padding.bottom;
         }
         else
         {
             this.height = style.fixedHeight;
         }
 
-        if (w > this.width)
-        {
-            w = this.width;
-        }
-
-        if (h > this.height)
-        {
-            h = this.height;
-        }
+        var w = this.width;
+        var h = this.height;
 
         this.updateDisplayOrigin();
 
@@ -1164,7 +1164,8 @@ var Text = new Class({
 
             this.frame.setSize(w, h);
 
-            style.syncFont(canvas, context); // Resizing resets the context
+            //  Because resizing the canvas resets the context
+            style.syncFont(canvas, context);
         }
         else
         {
@@ -1208,11 +1209,38 @@ var Text = new Class({
             }
             else if (style.align === 'right')
             {
-                linePositionX += textSize.width - textSize.lineWidths[i];
+                linePositionX += textWidth - textSize.lineWidths[i];
             }
             else if (style.align === 'center')
             {
-                linePositionX += (textSize.width - textSize.lineWidths[i]) / 2;
+                linePositionX += (textWidth - textSize.lineWidths[i]) / 2;
+            }
+            else if (style.align === 'justify')
+            {
+                //  To justify text line its width must be no less than 85% of defined width
+                var minimumLengthToApplyJustification = 0.85;
+
+                if (textSize.lineWidths[i] / textSize.width >= minimumLengthToApplyJustification)
+                {
+                    var extraSpace = textSize.width - textSize.lineWidths[i];
+                    var spaceSize = context.measureText(' ').width;
+                    var trimmedLine = lines[i].trim();
+                    var array = trimmedLine.split(' ');
+            
+                    extraSpace += (lines[i].length - trimmedLine.length) * spaceSize;
+            
+                    var extraSpaceCharacters = Math.floor(extraSpace / spaceSize);
+                    var idx = 0;
+
+                    while (extraSpaceCharacters > 0)
+                    {
+                        array[idx] += ' ';
+                        idx = (idx + 1) % (array.length - 1 || 1);
+                        --extraSpaceCharacters;
+                    }
+            
+                    lines[i] = array.join(' ');
+                }
             }
 
             if (this.autoRound)
@@ -1298,7 +1326,7 @@ var Text = new Class({
      * @method Phaser.GameObjects.Text#toJSON
      * @since 3.0.0
      *
-     * @return {Phaser.GameObjects.Types.JSONGameObject} A JSON representation of the Text object.
+     * @return {Phaser.Types.GameObjects.JSONGameObject} A JSON representation of the Text object.
      */
     toJSON: function ()
     {
