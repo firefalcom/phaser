@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -963,7 +963,7 @@ var DynamicTilemapLayer = new Class({
      *
      * If no layer specified, the map's current layer is used.
      *
-     * @method Phaser.Tilemaps.Tilemap#setCollision
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollision
      * @since 3.0.0
      *
      * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes.
@@ -976,7 +976,7 @@ var DynamicTilemapLayer = new Class({
      */
     setCollision: function (indexes, collides, recalculateFaces, updateLayer)
     {
-        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this, updateLayer);
+        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this.layer, updateLayer);
 
         return this;
     },
@@ -1220,7 +1220,7 @@ var DynamicTilemapLayer = new Class({
 
     /**
      * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
-     * specified layer. Each tile will recieve a new index. New indexes are drawn from the given
+     * specified layer. Each tile will receive a new index. New indexes are drawn from the given
      * weightedIndexes array. An example weighted array:
      *
      * [

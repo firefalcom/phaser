@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -43,6 +43,11 @@ var XHRLoader = function (file, globalXHRSettings)
     if (config.overrideMimeType)
     {
         xhr.overrideMimeType(config.overrideMimeType);
+    }
+
+    if (config.withCredentials)
+    {
+        xhr.withCredentials = true;
     }
 
     // After a successful request, the xhr.response property will contain the requested data as a DOMString, ArrayBuffer, Blob, or Document (depending on what was set for responseType.)

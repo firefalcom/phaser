@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -89,7 +89,10 @@ var SceneFile = new Class({
     {
         var code = this.data.concat('(function(){\n' + 'return new ' + this.key + '();\n' + '}).call(this);');
 
-        this.loader.sceneManager.add(this.key, eval(code));
+        //  Stops rollup from freaking out during build
+        var eval2 = eval;
+
+        this.loader.sceneManager.add(this.key, eval2(code));
 
         this.complete = true;
     }
@@ -189,7 +192,7 @@ var SceneFile = new Class({
  * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.js`, i.e. if `key` was "alien" then the URL will be "alien.js".
  * @param {Phaser.Types.Loader.XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
  *
- * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ * @return {this} The Loader instance.
  */
 FileTypesManager.register('sceneFile', function (key, url, xhrSettings)
 {

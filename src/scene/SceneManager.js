@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -1080,7 +1080,7 @@ var SceneManager = new Class({
     },
 
     /**
-     * Runs the given Scene, but does not change the state of this Scene.
+     * Runs the given Scene.
      *
      * If the given Scene is paused, it will resume it. If sleeping, it will wake it.
      * If not running at all, it will be started.
@@ -1118,7 +1118,7 @@ var SceneManager = new Class({
             //  Sleeping?
             scene.sys.wake(data);
         }
-        else if (scene.sys.isBooted && !scene.sys.isActive())
+        else if (scene.sys.isPaused())
         {
             //  Paused?
             scene.sys.resume(data);
@@ -1208,16 +1208,17 @@ var SceneManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - The Scene to stop.
+     * @param {object} [data] - Optional data object to pass to Scene.shutdown.
      *
      * @return {Phaser.Scenes.SceneManager} This SceneManager.
      */
-    stop: function (key)
+    stop: function (key, data)
     {
         var scene = this.getScene(key);
 
         if (scene && !scene.sys.isTransitioning())
         {
-            scene.sys.shutdown();
+            scene.sys.shutdown(data);
         }
 
         return this;
@@ -1528,7 +1529,7 @@ var SceneManager = new Class({
      *
      * @param {string} op - The operation to perform.
      * @param {(string|Phaser.Scene)} keyA - Scene A.
-     * @param {(string|Phaser.Scene)} [keyB] - Scene B.
+     * @param {(any|string|Phaser.Scene)} [keyB] - Scene B, or a data object.
      *
      * @return {Phaser.Scenes.SceneManager} This SceneManager.
      */

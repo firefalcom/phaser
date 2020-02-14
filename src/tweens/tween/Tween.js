@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -10,6 +10,7 @@ var Events = require('../events');
 var GameObjectCreator = require('../../gameobjects/GameObjectCreator');
 var GameObjectFactory = require('../../gameobjects/GameObjectFactory');
 var TWEEN_CONST = require('./const');
+var MATH_CONST = require('../../math/const');
 
 /**
  * @classdesc
@@ -344,6 +345,23 @@ var Tween = new Class({
         this.callbackScope;
     },
 
+    /**	
+     * Returns the current value of the specified Tween Data.
+     *
+     * @method Phaser.Tweens.Tween#getValue
+     * @since 3.0.0
+     * 
+     * @param {integer} [index=0] - The Tween Data to return the value from.
+     *
+     * @return {number} The value of the requested Tween Data.
+     */	
+    getValue: function (index)
+    {
+        if (index === undefined) { index = 0; }
+
+        return this.data[index].current;
+    },
+
     /**
      * Set the scale the time applied to this Tween. A value of 1 runs in real-time. A value of 0.5 runs 50% slower, and so on.
      *
@@ -499,7 +517,7 @@ var Tween = new Class({
     calcDuration: function ()
     {
         var maxDuration = 0;
-        var minDelay = Number.MAX_SAFE_INTEGER;
+        var minDelay = MATH_CONST.MAX_SAFE_INTEGER;
 
         var data = this.data;
 
@@ -1222,7 +1240,7 @@ var Tween = new Class({
     {
         if (!this.isSeeking)
         {
-            this.emit(event, this, tweenData.key, tweenData.target);
+            this.emit(event, this, tweenData.key, tweenData.target, tweenData.current, tweenData.previous);
 
             if (callback)
             {
@@ -1447,6 +1465,7 @@ var Tween = new Class({
 
                 tweenData.elapsed = elapsed;
                 tweenData.progress = progress;
+                tweenData.previous = tweenData.current;
 
                 if (progress === 1)
                 {

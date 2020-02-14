@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -16,6 +16,7 @@ var QuadraticBezierCurve = require('../QuadraticBezierCurve');
 var Rectangle = require('../../geom/rectangle/Rectangle');
 var SplineCurve = require('../SplineCurve');
 var Vector2 = require('../../math/Vector2');
+var MATH_CONST = require('../../math/const');
 
 /**
  * @classdesc
@@ -197,12 +198,12 @@ var Path = new Class({
      * @method Phaser.Curves.Path#cubicBezierTo
      * @since 3.0.0
      *
-     * @param {(number|Phaser.Math.Vector2)} x - The x coordinate of the end point. Or, if a Vec2, the p1 value.
-     * @param {(number|Phaser.Math.Vector2)} y - The y coordinate of the end point. Or, if a Vec2, the p2 value.
-     * @param {(number|Phaser.Math.Vector2)} control1X - The x coordinate of the first control point. Or, if a Vec2, the p3 value.
-     * @param {number} [control1Y] - The y coordinate of the first control point. Not used if vec2s are provided as the first 3 arguments.
-     * @param {number} [control2X] - The x coordinate of the second control point. Not used if vec2s are provided as the first 3 arguments.
-     * @param {number} [control2Y] - The y coordinate of the second control point. Not used if vec2s are provided as the first 3 arguments.
+     * @param {(number|Phaser.Math.Vector2)} x - The x coordinate of the end point. Or, if a Vector2, the p1 value.
+     * @param {(number|Phaser.Math.Vector2)} y - The y coordinate of the end point. Or, if a Vector2, the p2 value.
+     * @param {(number|Phaser.Math.Vector2)} control1X - The x coordinate of the first control point. Or, if a Vector2, the p3 value.
+     * @param {number} [control1Y] - The y coordinate of the first control point. Not used if Vector2s are provided as the first 3 arguments.
+     * @param {number} [control2X] - The x coordinate of the second control point. Not used if Vector2s are provided as the first 3 arguments.
+     * @param {number} [control2Y] - The y coordinate of the second control point. Not used if Vector2s are provided as the first 3 arguments.
      *
      * @return {Phaser.Curves.Path} This Path object.
      */
@@ -213,7 +214,7 @@ var Path = new Class({
         var p2;
         var p3;
 
-        //  Assume they're all vec2s
+        //  Assume they're all Vector2s
         if (x instanceof Vector2)
         {
             p1 = x;
@@ -251,7 +252,7 @@ var Path = new Class({
         var p1;
         var p2;
 
-        //  Assume they're all vec2s
+        //  Assume they're all Vector2s
         if (x instanceof Vector2)
         {
             p1 = x;
@@ -404,8 +405,8 @@ var Path = new Class({
         out.y = Number.MAX_VALUE;
 
         var bounds = new Rectangle();
-        var maxRight = Number.MIN_SAFE_INTEGER;
-        var maxBottom = Number.MIN_SAFE_INTEGER;
+        var maxRight = MATH_CONST.MIN_SAFE_INTEGER;
+        var maxBottom = MATH_CONST.MIN_SAFE_INTEGER;
 
         for (var i = 0; i < this.curves.length; i++)
         {
@@ -568,14 +569,12 @@ var Path = new Class({
     },
 
     /**
-     * Returns the defined starting point of the Path.
-     *
-     * This is not necessarily equal to the starting point of the first Curve if it differs from {@link startPoint}.
+     * Get a sequence of points on the path.
      *
      * @method Phaser.Curves.Path#getPoints
      * @since 3.0.0
      *
-     * @param {integer} [divisions=12] - The number of points to divide the path in to.
+     * @param {integer} [divisions=12] - The number of divisions per resolution per curve.
      *
      * @return {Phaser.Math.Vector2[]} An array of Vector2 objects that containing the points along the Path.
      */
@@ -624,7 +623,9 @@ var Path = new Class({
     },
 
     /**
-     * [description]
+     * Returns a randomly chosen point anywhere on the path. This follows the same rules as `getPoint` in that it may return a point on any Curve inside this path.
+     *
+     * When calling this method multiple times, the points are not guaranteed to be equally spaced spatially.
      *
      * @method Phaser.Curves.Path#getRandomPoint
      * @since 3.0.0
@@ -633,7 +634,7 @@ var Path = new Class({
      *
      * @param {Phaser.Math.Vector2} [out] - `Vector2` instance that should be used for storing the result. If `undefined` a new `Vector2` will be created.
      *
-     * @return {Phaser.Math.Vector2} [description]
+     * @return {Phaser.Math.Vector2} The modified `out` object, or a new `Vector2` if none was provided.
      */
     getRandomPoint: function (out)
     {
@@ -643,14 +644,16 @@ var Path = new Class({
     },
 
     /**
-     * Creates a straight Line Curve from the ending point of the Path to the given coordinates.
+     * Divides this Path into a set of equally spaced points,
+     *
+     * The resulting points are equally spaced with respect to the points' position on the path, but not necessarily equally spaced spatially.
      *
      * @method Phaser.Curves.Path#getSpacedPoints
      * @since 3.0.0
      *
-     * @param {integer} [divisions=40] - The X coordinate of the line's ending point, or the line's ending point as a `Vector2`.
+     * @param {integer} [divisions=40] - The amount of points to divide this Path into.
      *
-     * @return {Phaser.Math.Vector2[]} [description]
+     * @return {Phaser.Math.Vector2[]} A list of the points this path was subdivided into.
      */
     getSpacedPoints: function (divisions)
     {
@@ -672,16 +675,16 @@ var Path = new Class({
     },
 
     /**
-     * [description]
+     * Returns the starting point of the Path.
      *
      * @method Phaser.Curves.Path#getStartPoint
      * @since 3.0.0
      *
      * @generic {Phaser.Math.Vector2} O - [out,$return]
      *
-     * @param {Phaser.Math.Vector2} [out] - [description]
+     * @param {Phaser.Math.Vector2} [out] - `Vector2` instance that should be used for storing the result. If `undefined` a new `Vector2` will be created.
      *
-     * @return {Phaser.Math.Vector2} [description]
+     * @return {Phaser.Math.Vector2} The modified `out` object, or a new Vector2 if none was provided.
      */
     getStartPoint: function (out)
     {
@@ -691,15 +694,15 @@ var Path = new Class({
     },
 
     /**
-     * Creates a line curve from the previous end point to x/y
+     * Creates a line curve from the previous end point to x/y.
      *
      * @method Phaser.Curves.Path#lineTo
      * @since 3.0.0
      *
-     * @param {(number|Phaser.Math.Vector2)} x - [description]
-     * @param {number} [y] - [description]
+     * @param {(number|Phaser.Math.Vector2)} x - The X coordinate of the line's end point, or a `Vector2` containing the entire end point.
+     * @param {number} [y] - The Y coordinate of the line's end point, if a number was passed as the X parameter.
      *
-     * @return {Phaser.Curves.Path} [description]
+     * @return {Phaser.Curves.Path} This Path object.
      */
     lineTo: function (x, y)
     {
@@ -717,17 +720,15 @@ var Path = new Class({
         return this.add(new LineCurve([ end.x, end.y, this._tmpVec2B.x, this._tmpVec2B.y ]));
     },
 
-    //  Creates a spline curve starting at the previous end point, using the given parameters
-
     /**
-     * [description]
+     * Creates a spline curve starting at the previous end point, using the given points on the curve.
      *
      * @method Phaser.Curves.Path#splineTo
      * @since 3.0.0
      *
-     * @param {Phaser.Math.Vector2[]} points - [description]
+     * @param {Phaser.Math.Vector2[]} points - The points the newly created spline curve should consist of.
      *
-     * @return {Phaser.Curves.Path} [description]
+     * @return {Phaser.Curves.Path} This Path object.
      */
     splineTo: function (points)
     {
@@ -737,28 +738,37 @@ var Path = new Class({
     },
 
     /**
-     * [description]
+     * Creates a "gap" in this path from the path's current end point to the given coordinates.
+     *
+     * After calling this function, this Path's end point will be equal to the given coordinates
      *
      * @method Phaser.Curves.Path#moveTo
      * @since 3.0.0
      *
-     * @param {number} x - [description]
-     * @param {number} y - [description]
+     * @param {(number|Phaser.Math.Vector2)} x - The X coordinate of the position to move the path's end point to, or a `Vector2` containing the entire new end point.
+     * @param {number} y - The Y coordinate of the position to move the path's end point to, if a number was passed as the X coordinate.
      *
-     * @return {Phaser.Curves.Path} [description]
+     * @return {Phaser.Curves.Path} This Path object.
      */
     moveTo: function (x, y)
     {
-        return this.add(new MovePathTo(x, y));
+        if (x instanceof Vector2)
+        {
+            return this.add(new MovePathTo(x.x, x.y));
+        }
+        else
+        {
+            return this.add(new MovePathTo(x, y));
+        }
     },
 
     /**
-     * [description]
+     * Converts this Path to a JSON object containing the path information and its constituent curves.
      *
      * @method Phaser.Curves.Path#toJSON
      * @since 3.0.0
      *
-     * @return {Phaser.Types.Curves.JSONPath} [description]
+     * @return {Phaser.Types.Curves.JSONPath} The JSON object containing this path's data.
      */
     toJSON: function ()
     {
@@ -792,7 +802,7 @@ var Path = new Class({
     },
 
     /**
-     * [description]
+     * Disposes of this Path, clearing its internal references to objects so they can be garbage-collected.
      *
      * @method Phaser.Curves.Path#destroy
      * @since 3.0.0

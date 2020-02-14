@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Felipe Alfonso <@bitnenfer>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -52,19 +52,13 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
         renderer.setBlendMode(0);
     }
 
-    // var alpha = container._alpha;
-
-    var alphaTopLeft = container.alphaTopLeft;
-    var alphaTopRight = container.alphaTopRight;
-    var alphaBottomLeft = container.alphaBottomLeft;
-    var alphaBottomRight = container.alphaBottomRight;
+    var alpha = container.alpha;
 
     var scrollFactorX = container.scrollFactorX;
     var scrollFactorY = container.scrollFactorY;
 
     var list = children;
     var childCount = children.length;
-    var current = renderer.mask;
 
     for (var i = 0; i < childCount; i++)
     {
@@ -108,15 +102,7 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
 
         var mask = child.mask;
 
-        current = renderer.currentMask;
-
-        if (current.mask && current.mask !== mask)
-        {
-            //  Render out the previously set mask
-            current.mask.postRenderWebGL(renderer, current.camera);
-        }
-
-        if (mask && current.mask !== mask)
+        if (mask)
         {
             var childTransformMatrix;
 
@@ -154,7 +140,7 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
         //  Set parent values
         child.setScrollFactor(childScrollFactorX * scrollFactorX, childScrollFactorY * scrollFactorY);
 
-        child.setAlpha(childAlphaTopLeft * alphaTopLeft, childAlphaTopRight * alphaTopRight, childAlphaBottomLeft * alphaBottomLeft, childAlphaBottomRight * alphaBottomRight);
+        child.setAlpha(childAlphaTopLeft * alpha, childAlphaTopRight * alpha, childAlphaBottomLeft * alpha, childAlphaBottomRight * alpha);
 
         //  Render
         child.renderWebGL(renderer, child, interpolationPercentage, camera, transformMatrix);
@@ -164,6 +150,11 @@ var ContainerWebGLRenderer = function (renderer, container, interpolationPercent
         child.setAlpha(childAlphaTopLeft, childAlphaTopRight, childAlphaBottomLeft, childAlphaBottomRight);
 
         child.setScrollFactor(childScrollFactorX, childScrollFactorY);
+
+        if (mask)
+        {
+            mask.postRenderWebGL(renderer, camera);
+        }
 
         renderer.newType = false;
     }

@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -286,7 +286,7 @@ var GLSLFile = new Class({
                 }
                 else
                 {
-                    //  We've hit another --- delimeter, break out
+                    //  We've hit another --- delimiter, break out
                     captureSource = false;
                     break;
                 }
@@ -382,7 +382,7 @@ var GLSLFile = new Class({
  * @param {string} [shaderType='fragment'] - The type of shader. Either `fragment` for a fragment shader, or `vertex` for a vertex shader. This is ignored if you load a shader bundle.
  * @param {Phaser.Types.Loader.XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
  *
- * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ * @return {this} The Loader instance.
  */
 FileTypesManager.register('glsl', function (key, url, shaderType, xhrSettings)
 {

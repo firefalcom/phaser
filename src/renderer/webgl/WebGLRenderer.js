@@ -1,7 +1,7 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @author       Felipe Alfonso <@bitnenfer>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -23,6 +23,7 @@ var WebGLSnapshot = require('../snapshot/WebGLSnapshot');
 var BitmapMaskPipeline = require('./pipelines/BitmapMaskPipeline');
 var ForwardDiffuseLightPipeline = require('./pipelines/ForwardDiffuseLightPipeline');
 var TextureTintPipeline = require('./pipelines/TextureTintPipeline');
+var TextureTintStripPipeline = require('./pipelines/TextureTintStripPipeline');
 
 /**
  * @callback WebGLContextCallback
@@ -83,7 +84,8 @@ var WebGLRenderer = new Class({
             maxTextures: gameConfig.maxTextures,
             maxTextureSize: gameConfig.maxTextureSize,
             batchSize: gameConfig.batchSize,
-            maxLights: gameConfig.maxLights
+            maxLights: gameConfig.maxLights,
+            mipmapFilter: gameConfig.mipmapFilter
         };
 
         /**
@@ -524,6 +526,32 @@ var WebGLRenderer = new Class({
          */
         this.nextTypeMatch = false;
 
+        /**
+         * The mipmap magFilter to be used when creating textures.
+         * 
+         * You can specify this as a string in the game config, i.e.:
+         * 
+         * `renderer: { mipmapFilter: 'NEAREST_MIPMAP_LINEAR' }`
+         * 
+         * The 6 options for WebGL1 are, in order from least to most computationally expensive:
+         * 
+         * NEAREST (for pixel art)
+         * LINEAR (the default)
+         * NEAREST_MIPMAP_NEAREST
+         * LINEAR_MIPMAP_NEAREST
+         * NEAREST_MIPMAP_LINEAR
+         * LINEAR_MIPMAP_LINEAR
+         * 
+         * Mipmaps only work with textures that are fully power-of-two in size.
+         * 
+         * For more details see https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
+         * 
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#mipmapFilter
+         * @type {GLenum}
+         * @since 3.21.0
+         */
+        this.mipmapFilter = null;
+
         this.init(this.config);
     },
 
@@ -671,6 +699,9 @@ var WebGLRenderer = new Class({
 
         gl.clearColor(clearColor.redGL, clearColor.greenGL, clearColor.blueGL, clearColor.alphaGL);
 
+        //  Mipmaps
+        this.mipmapFilter = gl[config.mipmapFilter];
+
         // Initialize all textures to null
         for (var index = 0; index < this.currentTextures.length; ++index)
         {
@@ -681,6 +712,7 @@ var WebGLRenderer = new Class({
         this.pipelines = {};
 
         this.addPipeline('TextureTintPipeline', new TextureTintPipeline({ game: game, renderer: this }));
+        this.addPipeline('TextureTintStripPipeline', new TextureTintStripPipeline({ game: game, renderer: this }));
         this.addPipeline('BitmapMaskPipeline', new BitmapMaskPipeline({ game: game, renderer: this }));
         this.addPipeline('Light2D', new ForwardDiffuseLightPipeline({ game: game, renderer: this, maxLights: config.maxLights }));
 
@@ -1449,30 +1481,34 @@ var WebGLRenderer = new Class({
     createTextureFromSource: function (source, width, height, scaleMode)
     {
         var gl = this.gl;
-        var filter = gl.NEAREST;
+        var minFilter = gl.NEAREST;
+        var magFilter = gl.NEAREST;
         var wrap = gl.CLAMP_TO_EDGE;
         var texture = null;
 
         width = source ? source.width : width;
         height = source ? source.height : height;
 
-        if (IsSizePowerOfTwo(width, height))
+        var pow = IsSizePowerOfTwo(width, height);
+
+        if (pow)
         {
             wrap = gl.REPEAT;
         }
 
         if (scaleMode === CONST.ScaleModes.LINEAR && this.config.antialias)
         {
-            filter = gl.LINEAR;
+            minFilter = (pow) ? this.mipmapFilter : gl.LINEAR;
+            magFilter = gl.LINEAR;
         }
 
         if (!source && typeof width === 'number' && typeof height === 'number')
         {
-            texture = this.createTexture2D(0, filter, filter, wrap, wrap, gl.RGBA, null, width, height);
+            texture = this.createTexture2D(0, minFilter, magFilter, wrap, wrap, gl.RGBA, null, width, height);
         }
         else
         {
-            texture = this.createTexture2D(0, filter, filter, wrap, wrap, gl.RGBA, source);
+            texture = this.createTexture2D(0, minFilter, magFilter, wrap, wrap, gl.RGBA, source);
         }
 
         return texture;
@@ -1495,13 +1531,15 @@ var WebGLRenderer = new Class({
      * @param {integer} height - Height of the texture in pixels.
      * @param {boolean} [pma=true] - Does the texture have premultiplied alpha?
      * @param {boolean} [forceSize=false] - If `true` it will use the width and height passed to this method, regardless of the pixels dimension.
+     * @param {boolean} [flipY=false] - Sets the `UNPACK_FLIP_Y_WEBGL` flag the WebGL Texture uses during upload.
      *
      * @return {WebGLTexture} The WebGLTexture that was created.
      */
-    createTexture2D: function (mipLevel, minFilter, magFilter, wrapT, wrapS, format, pixels, width, height, pma, forceSize)
+    createTexture2D: function (mipLevel, minFilter, magFilter, wrapT, wrapS, format, pixels, width, height, pma, forceSize, flipY)
     {
         pma = (pma === undefined || pma === null) ? true : pma;
         if (forceSize === undefined) { forceSize = false; }
+        if (flipY === undefined) { flipY = false; }
 
         var gl = this.gl;
         var texture = gl.createTexture();
@@ -1512,7 +1550,9 @@ var WebGLRenderer = new Class({
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+
         gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, pma);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
 
         if (pixels === null || pixels === undefined)
         {
@@ -1527,6 +1567,11 @@ var WebGLRenderer = new Class({
             }
 
             gl.texImage2D(gl.TEXTURE_2D, mipLevel, format, format, gl.UNSIGNED_BYTE, pixels);
+        }
+
+        if (IsSizePowerOfTwo(width, height))
+        {
+            gl.generateMipmap(gl.TEXTURE_2D);
         }
 
         this.setTexture2D(null, 0);
@@ -1895,33 +1940,36 @@ var WebGLRenderer = new Class({
 
             camera.emit(CameraEvents.POST_RENDER, camera);
 
-            TextureTintPipeline.projOrtho(0, TextureTintPipeline.width, TextureTintPipeline.height, 0, -1000.0, 1000.0);
+            if (camera.renderToGame)
+            {
+                TextureTintPipeline.projOrtho(0, TextureTintPipeline.width, TextureTintPipeline.height, 0, -1000.0, 1000.0);
 
-            var getTint = Utils.getTintAppendFloatAlpha;
-
-            var pipeline = (camera.pipeline) ? camera.pipeline : TextureTintPipeline;
-
-            pipeline.batchTexture(
-                camera,
-                camera.glTexture,
-                camera.width, camera.height,
-                camera.x, camera.y,
-                camera.width, camera.height,
-                camera.zoom, camera.zoom,
-                camera.rotation,
-                camera.flipX, !camera.flipY,
-                1, 1,
-                0, 0,
-                0, 0, camera.width, camera.height,
-                getTint(camera._tintTL, camera._alphaTL),
-                getTint(camera._tintTR, camera._alphaTR),
-                getTint(camera._tintBL, camera._alphaBL),
-                getTint(camera._tintBR, camera._alphaBR),
-                (camera._isTinted && camera.tintFill),
-                0, 0,
-                this.defaultCamera,
-                null
-            );
+                var getTint = Utils.getTintAppendFloatAlpha;
+    
+                var pipeline = (camera.pipeline) ? camera.pipeline : TextureTintPipeline;
+    
+                pipeline.batchTexture(
+                    camera,
+                    camera.glTexture,
+                    camera.width, camera.height,
+                    camera.x, camera.y,
+                    camera.width, camera.height,
+                    camera.zoom, camera.zoom,
+                    camera.rotation,
+                    camera.flipX, !camera.flipY,
+                    1, 1,
+                    0, 0,
+                    0, 0, camera.width, camera.height,
+                    getTint(camera._tintTL, camera._alphaTL),
+                    getTint(camera._tintTR, camera._alphaTR),
+                    getTint(camera._tintBL, camera._alphaBL),
+                    getTint(camera._tintBR, camera._alphaBR),
+                    (camera._isTinted && camera.tintFill),
+                    0, 0,
+                    this.defaultCamera,
+                    null
+                );
+            }
 
             //  Force clear the current texture so that items next in the batch (like Graphics) don't try and use it
             this.setBlankTexture(true);
@@ -2283,48 +2331,109 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Creates a WebGL Texture based on the given canvas element.
+     * Creates a new WebGL Texture based on the given Canvas Element.
+     * 
+     * If the `dstTexture` parameter is given, the WebGL Texture is updated, rather than created fresh.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#canvasToTexture
      * @since 3.0.0
-     *
-     * @param {HTMLCanvasElement} srcCanvas - The Canvas element that will be used to populate the texture.
-     * @param {WebGLTexture} [dstTexture] - Is this going to replace an existing texture? If so, pass it here.
-     * @param {boolean} [noRepeat=false] - Should this canvas never be allowed to set REPEAT? (such as for Text objects)
-     *
-     * @return {WebGLTexture} The newly created WebGL Texture.
+     * 
+     * @param {HTMLCanvasElement} srcCanvas - The Canvas to create the WebGL Texture from
+     * @param {WebGLTexture} [dstTexture] - The destination WebGL Texture to set.
+     * @param {boolean} [noRepeat=false] - Should this canvas be allowed to set `REPEAT` (such as for Text objects?)
+     * @param {boolean} [flipY=false] - Should the WebGL Texture set `UNPACK_MULTIPLY_FLIP_Y`?
+     * 
+     * @return {WebGLTexture} The newly created, or updated, WebGL Texture.
      */
-    canvasToTexture: function (srcCanvas, dstTexture, noRepeat)
+    canvasToTexture: function (srcCanvas, dstTexture, noRepeat, flipY)
     {
         if (noRepeat === undefined) { noRepeat = false; }
-
-        var gl = this.gl;
+        if (flipY === undefined) { flipY = false; }
 
         if (!dstTexture)
         {
-            var wrapping = gl.CLAMP_TO_EDGE;
-
-            if (!noRepeat && IsSizePowerOfTwo(srcCanvas.width, srcCanvas.height))
-            {
-                wrapping = gl.REPEAT;
-            }
-
-            var filter = (this.config.antialias) ? gl.LINEAR : gl.NEAREST;
-
-            dstTexture = this.createTexture2D(0, filter, filter, wrapping, wrapping, gl.RGBA, srcCanvas, srcCanvas.width, srcCanvas.height, true);
+            return this.createCanvasTexture(srcCanvas, noRepeat, flipY);
         }
         else
         {
+            return this.updateCanvasTexture(srcCanvas, dstTexture, flipY);
+        }
+    },
+
+    /**
+     * Creates a new WebGL Texture based on the given Canvas Element.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createCanvasTexture
+     * @since 3.20.0
+     * 
+     * @param {HTMLCanvasElement} srcCanvas - The Canvas to create the WebGL Texture from
+     * @param {boolean} [noRepeat=false] - Should this canvas be allowed to set `REPEAT` (such as for Text objects?)
+     * @param {boolean} [flipY=false] - Should the WebGL Texture set `UNPACK_MULTIPLY_FLIP_Y`?
+     * 
+     * @return {WebGLTexture} The newly created WebGL Texture.
+     */
+    createCanvasTexture: function (srcCanvas, noRepeat, flipY)
+    {
+        if (noRepeat === undefined) { noRepeat = false; }
+        if (flipY === undefined) { flipY = false; }
+
+        var gl = this.gl;
+        var minFilter = gl.NEAREST;
+        var magFilter = gl.NEAREST;
+
+        var width = srcCanvas.width;
+        var height = srcCanvas.height;
+
+        var wrapping = gl.CLAMP_TO_EDGE;
+
+        var pow = IsSizePowerOfTwo(width, height);
+
+        if (!noRepeat && pow)
+        {
+            wrapping = gl.REPEAT;
+        }
+
+        if (this.config.antialias)
+        {
+            minFilter = (pow) ? this.mipmapFilter : gl.LINEAR;
+            magFilter = gl.LINEAR;
+        }
+
+        return this.createTexture2D(0, minFilter, magFilter, wrapping, wrapping, gl.RGBA, srcCanvas, width, height, true, false, flipY);
+    },
+
+    /**
+     * Updates a WebGL Texture based on the given Canvas Element.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#updateCanvasTexture
+     * @since 3.20.0
+     * 
+     * @param {HTMLCanvasElement} srcCanvas - The Canvas to update the WebGL Texture from.
+     * @param {WebGLTexture} dstTexture - The destination WebGL Texture to update.
+     * @param {boolean} [flipY=false] - Should the WebGL Texture set `UNPACK_MULTIPLY_FLIP_Y`?
+     * 
+     * @return {WebGLTexture} The updated WebGL Texture.
+     */
+    updateCanvasTexture: function (srcCanvas, dstTexture, flipY)
+    {
+        if (flipY === undefined) { flipY = false; }
+
+        var gl = this.gl;
+
+        var width = srcCanvas.width;
+        var height = srcCanvas.height;
+
+        if (width > 0 && height > 0)
+        {
             this.setTexture2D(dstTexture, 0);
 
-            if (srcCanvas.width > 0 && srcCanvas.height > 0)
-            {
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
-            }
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
 
-            dstTexture.width = srcCanvas.width;
-            dstTexture.height = srcCanvas.height;
-
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+    
+            dstTexture.width = width;
+            dstTexture.height = height;
+    
             this.setTexture2D(null, 0);
         }
 
@@ -2332,52 +2441,80 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Creates a WebGL Texture based on the given Video element.
+     * Creates a new WebGL Texture based on the given HTML Video Element.
      *
-     * @method Phaser.Renderer.WebGL.WebGLRenderer#videoToTexture
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createVideoTexture
      * @since 3.20.0
-     *
-     * @param {HTMLVideoElement} srcVideo - The Video element that will be used to populate the texture.
-     * @param {WebGLTexture} [dstTexture] - Is this going to replace an existing texture? If so, pass it here.
-     * @param {boolean} [noRepeat=false] - Should this texture never be allowed to set REPEAT?
-     *
+     * 
+     * @param {HTMLVideoElement} srcVideo - The Video to create the WebGL Texture from
+     * @param {boolean} [noRepeat=false] - Should this canvas be allowed to set `REPEAT`?
+     * @param {boolean} [flipY=false] - Should the WebGL Texture set `UNPACK_MULTIPLY_FLIP_Y`?
+     * 
      * @return {WebGLTexture} The newly created WebGL Texture.
      */
-    videoToTexture: function (srcVideo, dstTexture, noRepeat)
+    createVideoTexture: function (srcVideo, noRepeat, flipY)
     {
         if (noRepeat === undefined) { noRepeat = false; }
+        if (flipY === undefined) { flipY = false; }
+
+        var gl = this.gl;
+        var minFilter = gl.NEAREST;
+        var magFilter = gl.NEAREST;
+
+        var width = srcVideo.videoWidth;
+        var height = srcVideo.videoHeight;
+
+        var wrapping = gl.CLAMP_TO_EDGE;
+
+        var pow = IsSizePowerOfTwo(width, height);
+
+        if (!noRepeat && pow)
+        {
+            wrapping = gl.REPEAT;
+        }
+
+        if (this.config.antialias)
+        {
+            minFilter = (pow) ? this.mipmapFilter : gl.LINEAR;
+            magFilter = gl.LINEAR;
+        }
+
+        return this.createTexture2D(0, minFilter, magFilter, wrapping, wrapping, gl.RGBA, srcVideo, width, height, true, true, flipY);
+    },
+
+    /**
+     * Updates a WebGL Texture based on the given HTML Video Element.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#updateVideoTexture
+     * @since 3.20.0
+     * 
+     * @param {HTMLVideoElement} srcVideo - The Video to update the WebGL Texture with.
+     * @param {WebGLTexture} dstTexture - The destination WebGL Texture to update.
+     * @param {boolean} [flipY=false] - Should the WebGL Texture set `UNPACK_MULTIPLY_FLIP_Y`?
+     * 
+     * @return {WebGLTexture} The updated WebGL Texture.
+     */
+    updateVideoTexture: function (srcVideo, dstTexture, flipY)
+    {
+        if (flipY === undefined) { flipY = false; }
 
         var gl = this.gl;
 
         var width = srcVideo.videoWidth;
         var height = srcVideo.videoHeight;
 
-        if (!dstTexture)
+        if (width > 0 && height > 0)
         {
-            var wrapping = gl.CLAMP_TO_EDGE;
+            this.setTexture2D(dstTexture, 0);
 
-            if (!noRepeat && IsSizePowerOfTwo(width, height))
-            {
-                wrapping = gl.REPEAT;
-            }
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY);
 
-            var filter = (this.config.antialias) ? gl.LINEAR : gl.NEAREST;
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcVideo);
 
-            dstTexture = this.createTexture2D(0, filter, filter, wrapping, wrapping, gl.RGBA, srcVideo, width, height, true, true);
-        }
-        else if (dstTexture)
-        {
-            if (width > 0 && height > 0)
-            {
-                this.setTexture2D(dstTexture, 0);
+            dstTexture.width = width;
+            dstTexture.height = height;
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcVideo);
-
-                dstTexture.width = width;
-                dstTexture.height = height;
-
-                this.setTexture2D(null, 0);
-            }
+            this.setTexture2D(null, 0);
         }
 
         return dstTexture;
@@ -2410,14 +2547,16 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * [description]
+     * Sets a 1f uniform value on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat1
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {number} x - [description]
+     * @param {number} x - The 1f value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2431,15 +2570,17 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * [description]
+     * Sets the 2f uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat2
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {number} x - [description]
-     * @param {number} y - [description]
+     * @param {number} x - The 2f x value to set on the named uniform.
+     * @param {number} y - The 2f y value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2453,16 +2594,18 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * [description]
+     * Sets the 3f uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat3
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {number} x - [description]
-     * @param {number} y - [description]
-     * @param {number} z - [description]
+     * @param {number} x - The 3f x value to set on the named uniform.
+     * @param {number} y - The 3f y value to set on the named uniform.
+     * @param {number} z - The 3f z value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2476,17 +2619,19 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets uniform of a WebGLProgram
+     * Sets the 4f uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat4
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {number} x - X component
-     * @param {number} y - Y component
-     * @param {number} z - Z component
-     * @param {number} w - W component
+     * @param {number} x - The 4f x value to set on the named uniform.
+     * @param {number} y - The 4f y value to set on the named uniform.
+     * @param {number} z - The 4f z value to set on the named uniform.
+     * @param {number} w - The 4f w value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2500,7 +2645,9 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the value of a 1fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat1v
      * @since 3.13.0
@@ -2521,7 +2668,9 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the value of a 2fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat2v
      * @since 3.13.0
@@ -2542,7 +2691,9 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the value of a 3fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat3v
      * @since 3.13.0
@@ -2563,7 +2714,9 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the value of a 4fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat4v
      * @since 3.13.0
@@ -2585,14 +2738,16 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets a 1i uniform value on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setInt1
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {integer} x - [description]
+     * @param {integer} x - The 1i value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2606,15 +2761,17 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the 2i uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setInt2
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {integer} x - The new X component
-     * @param {integer} y - The new Y component
+     * @param {integer} x - The 2i x value to set on the named uniform.
+     * @param {integer} y - The 2i y value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2628,16 +2785,18 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the 3i uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setInt3
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {integer} x - The new X component
-     * @param {integer} y - The new Y component
-     * @param {integer} z - The new Z component
+     * @param {integer} x - The 3i x value to set on the named uniform.
+     * @param {integer} y - The 3i y value to set on the named uniform.
+     * @param {integer} z - The 3i z value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2651,17 +2810,19 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a uniform variable in the given WebGLProgram.
+     * Sets the 4i uniform values on the given shader.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setInt4
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {integer} x - X component
-     * @param {integer} y - Y component
-     * @param {integer} z - Z component
-     * @param {integer} w - W component
+     * @param {integer} x - The 4i x value to set on the named uniform.
+     * @param {integer} y - The 4i y value to set on the named uniform.
+     * @param {integer} z - The 4i z value to set on the named uniform.
+     * @param {integer} w - The 4i w value to set on the named uniform.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2675,7 +2836,9 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets the value of a 2x2 matrix uniform variable in the given WebGLProgram.
+     * Sets the value of a matrix 2fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setMatrix2
      * @since 3.0.0
@@ -2683,7 +2846,7 @@ var WebGLRenderer = new Class({
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
      * @param {boolean} transpose - The value indicating whether to transpose the matrix. Must be false.
-     * @param {Float32Array} matrix - The new matrix value.
+     * @param {Float32Array} matrix - A Float32Array or sequence of 4 float values.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2697,15 +2860,17 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * [description]
+     * Sets the value of a matrix 3fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setMatrix3
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {boolean} transpose - [description]
-     * @param {Float32Array} matrix - [description]
+     * @param {boolean} transpose - The value indicating whether to transpose the matrix. Must be false.
+     * @param {Float32Array} matrix - A Float32Array or sequence of 9 float values.
      *
      * @return {this} This WebGL Renderer instance.
      */
@@ -2719,15 +2884,17 @@ var WebGLRenderer = new Class({
     },
 
     /**
-     * Sets uniform of a WebGLProgram
+     * Sets the value of a matrix 4fv uniform variable in the given WebGLProgram.
+     * 
+     * If the shader is not currently active, it is made active first.
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setMatrix4
      * @since 3.0.0
      *
      * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
      * @param {string} name - The name of the uniform to look-up and modify.
-     * @param {boolean} transpose - Is the matrix transposed
-     * @param {Float32Array} matrix - Matrix data
+     * @param {boolean} transpose - The value indicating whether to transpose the matrix. Must be false.
+     * @param {Float32Array} matrix - A Float32Array or sequence of 16 float values.
      *
      * @return {this} This WebGL Renderer instance.
      */

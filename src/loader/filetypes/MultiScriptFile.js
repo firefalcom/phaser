@@ -1,6 +1,6 @@
 /**
  * @author       Richard Davey <rich@photonstorm.com>
- * @copyright    2019 Photon Storm Ltd.
+ * @copyright    2020 Photon Storm Ltd.
  * @license      {@link https://opensource.org/licenses/MIT|MIT License}
  */
 
@@ -111,7 +111,7 @@ var MultiScriptFile = new Class({
  * 
  * The difference between this and the `ScriptFile` file type is that you give an array of scripts to this method,
  * and the scripts are then processed _exactly_ in that order. This allows you to load a bunch of scripts that
- * may have dependancies on each other without worrying about the async nature of traditional script loading.
+ * may have dependencies on each other without worrying about the async nature of traditional script loading.
  *
  * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
  * 
@@ -179,7 +179,7 @@ var MultiScriptFile = new Class({
  * @param {string} [extension='js'] - The default file extension to use if no url is provided.
  * @param {Phaser.Types.Loader.XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for these files.
  *
- * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ * @return {this} The Loader instance.
  */
 FileTypesManager.register('scripts', function (key, url, xhrSettings)
 {
